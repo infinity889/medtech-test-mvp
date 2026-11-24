@@ -94,14 +94,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 **Description:** Создать переиспользуемые экстракторы для извлечения табличных и списочных прайс-листов из HTML (`beautifulsoup4` + `lxml`) и PDF (`pdfplumber`), включая нормализацию строковых цен в `Decimal` и разбор валют (`KZT`, `₸`, `тг`, `USD`, `$`) и сроков выполнения.
 
 **Acceptance criteria:**
-- [ ] HTML-экстрактор извлекает строки `(service_name_raw, price_raw, currency_raw, duration_days_raw)` из типовых HTML-таблиц и блоков прайса, пропуская заголовки/пустые цены с отчётом об ошибках строк.
-- [ ] PDF-экстрактор извлекает прайс-таблицы из многостраничного PDF через `pdfplumber` без падения на пустых/битых строках.
-- [ ] Оба экстрактора покрыты офлайн-тестами на фикстурах (валидные строки, пробелы/разделители тысяч, невалидные цены, USD/KZT).
+- [x] HTML-экстрактор извлекает строки `(service_name_raw, price_raw, currency_raw, duration_days_raw)` из типовых HTML-таблиц и блоков прайса, пропуская заголовки/пустые цены с отчётом об ошибках строк.
+- [x] PDF-экстрактор извлекает прайс-таблицы из многостраничного PDF через `pdfplumber` без падения на пустых/битых строках.
+- [x] Оба экстрактора покрыты офлайн-тестами на фикстурах (валидные строки, пробелы/разделители тысяч, невалидные цены, USD/KZT).
 
 **Verification:**
-- [ ] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_extractors_html_pdf.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: проверить, что суммы возвращаются строго как `Decimal`
+- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_extractors_html_pdf.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: проверить, что суммы возвращаются строго как `Decimal`
 
 **Dependencies:** Task 2
 
