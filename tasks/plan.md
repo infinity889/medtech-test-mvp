@@ -50,7 +50,7 @@ Task 1 (Podman Python 3.12 + PG 16 + scaffold)
 - [x] Контейнеры собираются и стартуют, `alembic upgrade head` проходит чисто, `pytest` запускается внутри контейнера
 
 ### Phase 2: Politeness & Document Extractors
-- [ ] Task 3: Реализовать `PoliteHttpClient` (`robots.txt`, per-domain rate limit, ретраи) и офлайн-тесты
+- [x] Task 3: Реализовать `PoliteHttpClient` (`robots.txt`, per-domain rate limit, ретраи) и офлайн-тесты
 - [ ] Task 4: Реализовать HTML и PDF экстракторы прайс-листов с тестами на фикстурах
 - [ ] Task 5: Реализовать DOCX и Excel экстракторы прайс-листов с тестами на фикстурах
 

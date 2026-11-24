@@ -70,14 +70,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 **Description:** Реализовать асинхронный HTTP-клиент `PoliteHttpClient` поверх `httpx.AsyncClient` с кэшируемой проверкой `robots.txt` (через `urllib.robotparser`), ограничением конкурентности `1` на домен, минимальной задержкой ≥ 1.5 сек (+ jitter), понятным `User-Agent`, строгой проверкой TLS и ретраями на временные ошибки (429/5xx/таймаут).
 
 **Acceptance criteria:**
-- [ ] Запрос к URL, запрещённому в `robots.txt`, не выполняется и выбрасывает типизированное исключение `RobotsDisallowedError`.
-- [ ] Последовательные запросы к одному домену соблюдают минимальную задержку `min_delay_sec` (проверено в юнит-тесте с подменой таймера/sleep).
-- [ ] Временные ответы `429`/`503` ретраятся с backoff ограниченное число раз, после чего поднимают структурированную ошибку.
+- [x] Запрос к URL, запрещённому в `robots.txt`, не выполняется и выбрасывает типизированное исключение `RobotsDisallowedError`.
+- [x] Последовательные запросы к одному домену соблюдают минимальную задержку `min_delay_sec` (проверено в юнит-тесте с подменой таймера/sleep).
+- [x] Временные ответы `429`/`503` ретраятся с backoff ограниченное число раз, после чего поднимают структурированную ошибку.
 
 **Verification:**
-- [ ] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_http_client.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: убедиться, что `verify=True` по умолчанию и отключение TLS не используется
+- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_http_client.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: убедиться, что `verify=True` по умолчанию и отключение TLS не используется
 
 **Dependencies:** Task 2
 
