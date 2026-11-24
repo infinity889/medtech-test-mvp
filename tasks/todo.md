@@ -178,14 +178,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 **Description:** Реализовать публичный фасад `IngestionService` (контракт для `normalization` и `search-api`: `list_sources`, `trigger_run`, `list_runs`, `list_errors`, `iter_raw_records`, `purge_expired_raw_records`), периодический планировщик (`APScheduler`) и CLI (`run`, `list-sources`, `purge-expired`).
 
 **Acceptance criteria:**
-- [ ] `IngestionService.iter_raw_records(updated_since=...)` возвращает батчи `RawServiceRecordDTO` в детерминированном порядке для модуля `normalization`.
-- [ ] `purge_expired_raw_records(retention_days)` отклоняет значение `< 90` (`ValueError`) и удаляет только записи с `last_seen_at < now - retention_days`.
-- [ ] CLI поддерживает `python -m app.ingestion.cli list-sources`, `run --source all|<id> [--limit N]`, `purge-expired`, а `scheduler.py` конфигурирует ежедневный запуск (24h).
+- [x] `IngestionService.iter_raw_records(updated_since=...)` возвращает батчи `RawServiceRecordDTO` в детерминированном порядке для модуля `normalization`.
+- [x] `purge_expired_raw_records(retention_days)` отклоняет значение `< 90` (`ValueError`) и удаляет только записи с `last_seen_at < now - retention_days`.
+- [x] CLI поддерживает `python -m app.ingestion.cli list-sources`, `run --source all|<id> [--limit N]`, `purge-expired`, а `scheduler.py` конфигурирует ежедневный запуск (24h).
 
 **Verification:**
-- [ ] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_service.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: запустить `python -m app.ingestion.cli list-sources` внутри контейнера
+- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_service.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: запустить `python -m app.ingestion.cli list-sources` внутри контейнера
 
 **Dependencies:** Task 6
 
@@ -200,8 +200,8 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 ---
 
 ## Checkpoint 3: After Tasks 6–7 (Ingestion Core)
-- [ ] Весь движок `ingestion` (дедупликация, изоляция ошибок, 90-дневный аудит, реестр адаптеров, `IngestionService`, CLI, планировщик) протестирован против реальной PostgreSQL 16
-- [ ] Все тесты, `ruff` и `mypy` проходят чисто
+- [x] Весь движок `ingestion` (дедупликация, изоляция ошибок, 90-дневный аудит, реестр адаптеров, `IngestionService`, CLI, планировщик) протестирован против реальной PostgreSQL 16
+- [x] Все тесты, `ruff` и `mypy` проходят чисто
 
 ---
 

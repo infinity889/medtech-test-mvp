@@ -59,10 +59,10 @@ Task 1 (Podman Python 3.12 + PG 16 + scaffold)
 
 ### Phase 3: Ingestion Core & Provider Contract
 - [x] Task 6: Реализовать `RawServiceInput`, `BaseSourceAdapter`, `AdapterRegistry` и `IngestionRunner` (дедупликация + изоляция ошибок)
-- [ ] Task 7: Реализовать публичный `IngestionService`, `scheduler.py`, `cli.py` и очистку старше 90 дней
+- [x] Task 7: Реализовать публичный `IngestionService`, `scheduler.py`, `cli.py` и очистку старше 90 дней
 
 ### Checkpoint 3: Ingestion Core
-- [ ] Повторный запуск на фикстурном адаптере даёт 0 дублей, падение одного адаптера не останавливает второй, `purge_expired_raw_records` защищён порогом ≥ 90 дней
+- [x] Повторный запуск на фикстурном адаптере даёт 0 дублей, падение одного адаптера не останавливает второй, `purge_expired_raw_records` защищён порогом ≥ 90 дней
 
 ### Phase 4: Real KZ Source Adapters & Live Verification
 - [ ] Task 8: Реализовать адаптер #1 — `kdlolymp.kz` (КДЛ Олимп) с фикстурными тестами
