@@ -45,11 +45,13 @@ default_registry = AdapterRegistry()
 
 
 def _register_builtin_adapters(registry: AdapterRegistry) -> None:
+    from app.ingestion.adapters.doq import DoqAdapter
     from app.ingestion.adapters.invivo import InvivoAdapter
     from app.ingestion.adapters.kdlolymp import KdlOlympAdapter
 
     registry.register(KdlOlympAdapter())
     registry.register(InvivoAdapter())
+    registry.register(DoqAdapter())
 
 
 _register_builtin_adapters(default_registry)

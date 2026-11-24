@@ -262,14 +262,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 **Description:** Изучить открытую структуру клиник/приёмов врачей/диагностики на `doq.kz` (агрегатор из ТЗ с открытым `robots.txt`, покрывает приёмы врачей, диагностику, рейтинги клиник, адреса, онлайн-запись и города РК), реализовать адаптер, зарегистрировать в `registry.py` и покрыть офлайн-тестами на фикстурах.
 
 **Acceptance criteria:**
-- [ ] Адаптер извлекает услуги клиник/врачей, цены в KZT, город, адрес, рейтинг и флаг онлайн-записи (где присутствуют на странице) с соблюдением `robots.txt`.
-- [ ] Зарегистрирован в `registry.py` без изменений в ядре `ingestion`.
-- [ ] Офлайн-контрактные тесты на сохранённых фикстурах проходят полностью.
+- [x] Адаптер извлекает услуги клиник/врачей, цены в KZT, город, адрес, рейтинг и флаг онлайн-записи (где присутствуют на странице) с соблюдением `robots.txt`.
+- [x] Зарегистрирован в `registry.py` без изменений в ядре `ingestion`.
+- [x] Офлайн-контрактные тесты на сохранённых фикстурах проходят полностью.
 
 **Verification:**
-- [ ] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_adapter_doq.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: пробный CLI-прогон `run --source doq --limit 30` сохраняет ≥ 30 валидных записей
+- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_adapter_doq.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: пробный CLI-прогон `run --source doq --limit 30` сохраняет ≥ 30 валидных записей
 
 **Dependencies:** Tasks 4, 7
 
