@@ -236,14 +236,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 **Description:** Изучить открытую структуру прайса/каталога и городов на `invivo.kz` (или другом утверждённом источнике вместо заблокированного `invitro.kz`), реализовать адаптер, зарегистрировать в `registry.py` и покрыть офлайн-тестами на фикстурах.
 
 **Acceptance criteria:**
-- [ ] Адаптер извлекает реальные услуги, цены в KZT, сроки выполнения и городские метаданные с соблюдением `robots.txt` и задержек.
-- [ ] Зарегистрирован в `registry.py` без изменений в ядре `ingestion`.
-- [ ] Офлайн-контрактные тесты на сохранённых фикстурах проходят полностью.
+- [x] Адаптер извлекает реальные услуги, цены в KZT, сроки выполнения и городские метаданные с соблюдением `robots.txt` и задержек.
+- [x] Зарегистрирован в `registry.py` без изменений в ядре `ingestion`.
+- [x] Офлайн-контрактные тесты на сохранённых фикстурах проходят полностью.
 
 **Verification:**
-- [ ] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_adapter_invivo.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: пробный CLI-прогон `run --source invivo --limit 30` сохраняет ≥ 30 валидных записей
+- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_adapter_invivo.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: пробный CLI-прогон `run --source invivo --limit 30` сохраняет ≥ 30 валидных записей
 
 **Dependencies:** Tasks 4, 7
 
