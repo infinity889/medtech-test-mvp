@@ -288,14 +288,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 **Description:** Запустить полный сбор по всем 3+ зарегистрированным источникам в PostgreSQL, проверить повторный идемпотентный запуск (0 дублей), проверить объём реальных данных (≥ 100 услуг, ≥ 3 источника, ≥ 3 города РК), покрытие тестами ≥ 80% и зафиксировать команды запуска в `README.md`.
 
 **Acceptance criteria:**
-- [ ] В `raw_service_records` собрано ≥ 100 реальных услуг минимум из 3 открытых источников.
-- [ ] Повторный запуск на тех же параметрах даёт 0 дублей (`records_inserted == 0`).
-- [ ] Покрытие `pytest --cov=app.ingestion` ≥ 80%, `ruff check` и `mypy` проходят без ошибок.
+- [x] В `raw_service_records` собрано ≥ 100 реальных услуг минимум из 3 открытых источников.
+- [x] Повторный запуск на тех же параметрах даёт 0 дублей (`records_inserted == 0`).
+- [x] Покрытие `pytest --cov=app.ingestion` ≥ 80%, `ruff check` и `mypy` проходят без ошибок.
 
 **Verification:**
-- [ ] Tests pass: `make test-ingestion`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: SQL-запрос по `raw_service_records` (`GROUP BY source_id, city_raw`) подтверждает ≥ 3 источников и ≥ 100 записей; повторный запуск даёт `records_inserted = 0`
+- [x] Tests pass: `make test-ingestion`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: SQL-запрос по `raw_service_records` (`GROUP BY source_id, city_raw`) подтверждает ≥ 3 источников и ≥ 100 записей; повторный запуск даёт `records_inserted = 0`
 
 **Dependencies:** Tasks 8, 9, 10
 
@@ -308,5 +308,5 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 ---
 
 ## Checkpoint 4: After Task 11 (Module Complete)
-- [ ] Все 7 критериев успеха из [SPEC-ingestion.md](../SPEC-ingestion.md) выполнены и подтверждены
+- [x] Все 7 критериев успеха из [SPEC-ingestion.md](../SPEC-ingestion.md) выполнены и подтверждены
 - [ ] Готово к ревью пользователя и переходу к `SPEC-normalization.md`
