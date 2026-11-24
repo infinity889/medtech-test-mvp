@@ -42,3 +42,12 @@ class AdapterRegistry:
 
 
 default_registry = AdapterRegistry()
+
+
+def _register_builtin_adapters(registry: AdapterRegistry) -> None:
+    from app.ingestion.adapters.kdlolymp import KdlOlympAdapter
+
+    registry.register(KdlOlympAdapter())
+
+
+_register_builtin_adapters(default_registry)

@@ -210,14 +210,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 **Description:** Изучить открытую структуру каталога/прайса и городов на `kdlolymp.kz` (в рамках разрешённого `robots.txt`), реализовать `KdlOlympAdapter`, зарегистрировать в `registry.py` и написать офлайн-тесты на сохранённых HTML/JSON-фикстурах.
 
 **Acceptance criteria:**
-- [ ] Адаптер извлекает реальные лабораторные услуги, цены в KZT, сроки выполнения (где указаны), город и контактные метаданные `kdlolymp.kz` без обхода `robots.txt`.
-- [ ] Зарегистрирован в `registry.py` без изменений в `runner.py`, `models.py`, `service.py` или `cli.py`.
-- [ ] Офлайн-контрактные тесты на сохранённых фикстурах проверяют валидность `RawServiceInput` и корректный парсинг цен/сроков.
+- [x] Адаптер извлекает реальные лабораторные услуги, цены в KZT, сроки выполнения (где указаны), город и контактные метаданные `kdlolymp.kz` без обхода `robots.txt`.
+- [x] Зарегистрирован в `registry.py` без изменений в `runner.py`, `models.py`, `service.py` или `cli.py`.
+- [x] Офлайн-контрактные тесты на сохранённых фикстурах проверяют валидность `RawServiceInput` и корректный парсинг цен/сроков.
 
 **Verification:**
-- [ ] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_adapter_kdlolymp.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: пробный CLI-прогон `run --source kdlolymp --limit 30` сохраняет ≥ 30 валидных записей в `raw_service_records`
+- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_adapter_kdlolymp.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: пробный CLI-прогон `run --source kdlolymp --limit 30` сохраняет ≥ 30 валидных записей в `raw_service_records`
 
 **Dependencies:** Tasks 4, 7
 
