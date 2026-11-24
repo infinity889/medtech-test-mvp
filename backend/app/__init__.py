@@ -1,0 +1,1 @@
+"""MedServicePrice.kz backend package."""

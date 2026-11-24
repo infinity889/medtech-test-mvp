@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=69.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "medserviceprice-backend"
+version = "0.1.0"
+description = "MedServicePrice.kz backend and data ingestion platform"
+requires-python = ">=3.12"
+dependencies = [
+    "sqlalchemy>=2.0.36,<3.0",
+    "psycopg[binary]>=3.2.3,<4.0",
+    "alembic>=1.14.0,<2.0",
+    "httpx>=0.28.0,<1.0",
+    "beautifulsoup4>=4.12.3,<5.0",
+    "lxml>=5.3.0,<6.0",
+    "pdfplumber>=0.11.4,<1.0",
+    "python-docx>=1.1.2,<2.0",
+    "openpyxl>=3.1.5,<4.0",
+    "pydantic>=2.10.0,<3.0",
+    "pydantic-settings>=2.6.0,<3.0",
+    "apscheduler>=3.10.4,<4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.4,<9.0",
+    "pytest-asyncio>=0.24.0,<1.0",
+    "pytest-cov>=6.0.0,<7.0",
+    "respx>=0.22.0,<1.0",
+    "ruff>=0.8.0,<1.0",
+    "mypy>=1.13.0,<2.0",
+    "types-beautifulsoup4>=4.12.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = [
+    "pdfplumber.*",
+    "docx.*",
+    "openpyxl.*",
+    "apscheduler.*",
+]
+ignore_missing_imports = true

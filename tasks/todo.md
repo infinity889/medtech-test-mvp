@@ -9,14 +9,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 **Description:** Создать минимальный воспроизводимый каркас backend-проекта с контейнером Python 3.12 (`backend/Containerfile`), описанием зависимостей и инструментов качества (`pyproject.toml`) и `Makefile` для управления сетью `podman`, контейнером PostgreSQL 16 и запуском тестов/линтеров.
 
 **Acceptance criteria:**
-- [ ] `backend/Containerfile` собирается на базе `python:3.12-slim` со всеми зависимостями модуля `ingestion` (`sqlalchemy`, `psycopg[binary]`, `alembic`, `httpx`, `beautifulsoup4`, `lxml`, `pdfplumber`, `python-docx`, `openpyxl`, `pydantic-settings`, `apscheduler`, `pytest`, `pytest-asyncio`, `pytest-cov`, `respx`, `ruff`, `mypy`).
-- [ ] `Makefile` предоставляет команды `db-up`, `db-down`, `backend-build`, `migrate`, `test-ingestion`, `lint`, `typecheck`.
-- [ ] PostgreSQL 16 запускается в сети `medprice-net` и отвечает на `pg_isready`.
+- [x] `backend/Containerfile` собирается на базе `python:3.12-slim` со всеми зависимостями модуля `ingestion` (`sqlalchemy`, `psycopg[binary]`, `alembic`, `httpx`, `beautifulsoup4`, `lxml`, `pdfplumber`, `python-docx`, `openpyxl`, `pydantic-settings`, `apscheduler`, `pytest`, `pytest-asyncio`, `pytest-cov`, `respx`, `ruff`, `mypy`).
+- [x] `Makefile` предоставляет команды `db-up`, `db-down`, `backend-build`, `migrate`, `test-ingestion`, `lint`, `typecheck`.
+- [x] PostgreSQL 16 запускается в сети `medprice-net` и отвечает на `pg_isready`.
 
 **Verification:**
-- [ ] Build succeeds: `make backend-build && make db-up`
-- [ ] Tests pass: `make test-ingestion` (запускает `pytest` внутри контейнера без ошибок импорта)
-- [ ] Manual check: `podman exec medprice-pg pg_isready -U medprice` возвращает `accepting connections`
+- [x] Build succeeds: `make backend-build && make db-up`
+- [x] Tests pass: `make test-ingestion` (запускает `pytest` внутри контейнера без ошибок импорта)
+- [x] Manual check: `podman exec medprice-pg pg_isready -U medprice` возвращает `accepting connections`
 
 **Dependencies:** None
 

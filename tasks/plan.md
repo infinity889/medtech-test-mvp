@@ -43,7 +43,7 @@ Task 1 (Podman Python 3.12 + PG 16 + scaffold)
 Подробные карточки задач (описание, критерии приёмки, команды проверки, файлы, размер) находятся в [tasks/todo.md](./todo.md).
 
 ### Phase 1: Foundation
-- [ ] Task 1: Подготовить `podman`-окружение (Python 3.12 + PostgreSQL 16), `pyproject.toml` и `Makefile`
+- [x] Task 1: Подготовить `podman`-окружение (Python 3.12 + PostgreSQL 16), `pyproject.toml` и `Makefile`
 - [ ] Task 2: Реализовать конфиг, подключение БД, ORM-модели raw-слоя и начальную миграцию Alembic
 
 ### Checkpoint 1: Foundation
