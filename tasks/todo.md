@@ -120,14 +120,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 **Description:** Создать переиспользуемые экстракторы для извлечения прайс-листов из документов Word (`.docx` через `python-docx`) и электронных таблиц Excel (`.xlsx` через `openpyxl`), с тестами на программно генерируемых/сохранённых фикстурах.
 
 **Acceptance criteria:**
-- [ ] DOCX-экстрактор извлекает прайс-строки из таблиц Word-документа, корректно определяя колонки названия, цены и срока.
-- [ ] Excel-экстрактор извлекает прайс-строки со всех/выбранных листов `.xlsx`, обрабатывая числовые и строковые ячейки цен.
-- [ ] Некорректные/пустые строки возвращаются как ошибки разбора, не прерывая обработку остальных строк документа.
+- [x] DOCX-экстрактор извлекает прайс-строки из таблиц Word-документа, корректно определяя колонки названия, цены и срока.
+- [x] Excel-экстрактор извлекает прайс-строки со всех/выбранных листов `.xlsx`, обрабатывая числовые и строковые ячейки цен.
+- [x] Некорректные/пустые строки возвращаются как ошибки разбора, не прерывая обработку остальных строк документа.
 
 **Verification:**
-- [ ] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_extractors_docx_excel.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: убедиться, что все 4 формата из ТЗ 3.1 (HTML, PDF, DOCX, Excel) доступны через общий пакет `app.ingestion.extractors`
+- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_extractors_docx_excel.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: убедиться, что все 4 формата из ТЗ 3.1 (HTML, PDF, DOCX, Excel) доступны через общий пакет `app.ingestion.extractors`
 
 **Dependencies:** Task 4
 
@@ -141,8 +141,8 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 ---
 
 ## Checkpoint 2: After Tasks 3–5 (Politeness & Extractors)
-- [ ] Все офлайн-тесты `PoliteHttpClient` и 4 экстракторов (HTML, PDF, DOCX, Excel) зелёные
-- [ ] `ruff check` и `mypy` проходят без предупреждений и ошибок
+- [x] Все офлайн-тесты `PoliteHttpClient` и 4 экстракторов (HTML, PDF, DOCX, Excel) зелёные
+- [x] `ruff check` и `mypy` проходят без предупреждений и ошибок
 
 ---
 

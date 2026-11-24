@@ -52,10 +52,10 @@ Task 1 (Podman Python 3.12 + PG 16 + scaffold)
 ### Phase 2: Politeness & Document Extractors
 - [x] Task 3: Реализовать `PoliteHttpClient` (`robots.txt`, per-domain rate limit, ретраи) и офлайн-тесты
 - [x] Task 4: Реализовать HTML и PDF экстракторы прайс-листов с тестами на фикстурах
-- [ ] Task 5: Реализовать DOCX и Excel экстракторы прайс-листов с тестами на фикстурах
+- [x] Task 5: Реализовать DOCX и Excel экстракторы прайс-листов с тестами на фикстурах
 
 ### Checkpoint 2: Politeness & Extractors
-- [ ] Все тесты HTTP-клиента и 4 экстракторов проходят, `ruff` и `mypy` без ошибок
+- [x] Все тесты HTTP-клиента и 4 экстракторов проходят, `ruff` и `mypy` без ошибок
 
 ### Phase 3: Ingestion Core & Provider Contract
 - [ ] Task 6: Реализовать `RawServiceInput`, `BaseSourceAdapter`, `AdapterRegistry` и `IngestionRunner` (дедупликация + изоляция ошибок)
