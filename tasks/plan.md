@@ -58,7 +58,7 @@ Task 1 (Podman Python 3.12 + PG 16 + scaffold)
 - [x] Все тесты HTTP-клиента и 4 экстракторов проходят, `ruff` и `mypy` без ошибок
 
 ### Phase 3: Ingestion Core & Provider Contract
-- [ ] Task 6: Реализовать `RawServiceInput`, `BaseSourceAdapter`, `AdapterRegistry` и `IngestionRunner` (дедупликация + изоляция ошибок)
+- [x] Task 6: Реализовать `RawServiceInput`, `BaseSourceAdapter`, `AdapterRegistry` и `IngestionRunner` (дедупликация + изоляция ошибок)
 - [ ] Task 7: Реализовать публичный `IngestionService`, `scheduler.py`, `cli.py` и очистку старше 90 дней
 
 ### Checkpoint 3: Ingestion Core

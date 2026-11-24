@@ -151,14 +151,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 **Description:** Реализовать Pydantic-схемы (`RawServiceInput`, `RawServiceRecordDTO`, `ScrapeRunDTO`, `ScrapeErrorDTO`, `SourceInfo`), базовый интерфейс адаптера, реестр подключаемых источников и оркестратор `IngestionRunner` с вычислением `record_fingerprint`, идемпотентным UPSERT-ом и полной изоляцией ошибок между источниками.
 
 **Acceptance criteria:**
-- [ ] Повторный запуск `IngestionRunner` на неизменных данных даёт `records_inserted == 0` и `records_updated == N` (0 дубликатов в БД).
-- [ ] Изменение цены для той же услуги создаёт новую запись в `raw_service_records`, сохраняя старую запись нетронутой.
-- [ ] Исключение в одном адаптере (или `RobotsDisallowedError` / ошибка валидации строки) фиксируется в `scrape_errors`, помечает запуск этого источника как `failed`/`partial` и не прерывает остальные источники.
+- [x] Повторный запуск `IngestionRunner` на неизменных данных даёт `records_inserted == 0` и `records_updated == N` (0 дубликатов в БД).
+- [x] Изменение цены для той же услуги создаёт новую запись в `raw_service_records`, сохраняя старую запись нетронутой.
+- [x] Исключение в одном адаптере (или `RobotsDisallowedError` / ошибка валидации строки) фиксируется в `scrape_errors`, помечает запуск этого источника как `failed`/`partial` и не прерывает остальные источники.
 
 **Verification:**
-- [ ] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_runner.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: проверить, что добавление фикстурного тестового адаптера через `AdapterRegistry.register()` не требует правок в `runner.py`
+- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_runner.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: проверить, что добавление фикстурного тестового адаптера через `AdapterRegistry.register()` не требует правок в `runner.py`
 
 **Dependencies:** Tasks 2, 3
 
