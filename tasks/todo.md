@@ -36,14 +36,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 **Description:** Создать конфигурацию (`Settings` через `pydantic-settings`), движок/сессию SQLAlchemy 2.0, ORM-модели raw-слоя (`ScrapeRun`, `RawServiceRecord`, `ScrapeError` с уникальным ключом `(source_id, record_fingerprint)` и индексами) и первую миграцию Alembic.
 
 **Acceptance criteria:**
-- [ ] Таблицы `scrape_runs`, `raw_service_records`, `scrape_errors` создаются миграцией Alembic со всеми полями, типами (`Numeric(12, 2)`, timezone-aware `DateTime`, `JSONB`), FK и `UNIQUE (source_id, record_fingerprint)`.
-- [ ] Миграция обратима (`alembic upgrade head` → `alembic downgrade base` → `alembic upgrade head` проходит без ошибок).
-- [ ] Конфиг считывает `DATABASE_URL`, `USER_AGENT`, `DEFAULT_MIN_DELAY_SEC` (≥ 1.5), `RAW_RETENTION_DAYS` (≥ 90).
+- [x] Таблицы `scrape_runs`, `raw_service_records`, `scrape_errors` создаются миграцией Alembic со всеми полями, типами (`Numeric(12, 2)`, timezone-aware `DateTime`, `JSONB`), FK и `UNIQUE (source_id, record_fingerprint)`.
+- [x] Миграция обратима (`alembic upgrade head` → `alembic downgrade base` → `alembic upgrade head` проходит без ошибок).
+- [x] Конфиг считывает `DATABASE_URL`, `USER_AGENT`, `DEFAULT_MIN_DELAY_SEC` (≥ 1.5), `RAW_RETENTION_DAYS` (≥ 90).
 
 **Verification:**
-- [ ] Tests pass: `make migrate && make test-ingestion`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: проверить созданные таблицы и constraints в PostgreSQL через `\dt` и `\d raw_service_records`
+- [x] Tests pass: `make migrate && make test-ingestion`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: проверить созданные таблицы и constraints в PostgreSQL через `\dt` и `\d raw_service_records`
 
 **Dependencies:** Task 1
 
@@ -59,9 +59,9 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SP
 ---
 
 ## Checkpoint 1: After Tasks 1–2 (Foundation)
-- [ ] Контейнер `medprice-backend:dev` (Python 3.12) собран и `medprice-pg` (PostgreSQL 16) работает
-- [ ] `alembic upgrade head` и `downgrade`/`upgrade` проходят без ошибок
-- [ ] `ruff`, `mypy` и `pytest` работают внутри контейнера
+- [x] Контейнер `medprice-backend:dev` (Python 3.12) собран и `medprice-pg` (PostgreSQL 16) работает
+- [x] `alembic upgrade head` и `downgrade`/`upgrade` проходят без ошибок
+- [x] `ruff`, `mypy` и `pytest` работают внутри контейнера
 
 ---
 

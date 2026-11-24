@@ -44,10 +44,10 @@ Task 1 (Podman Python 3.12 + PG 16 + scaffold)
 
 ### Phase 1: Foundation
 - [x] Task 1: Подготовить `podman`-окружение (Python 3.12 + PostgreSQL 16), `pyproject.toml` и `Makefile`
-- [ ] Task 2: Реализовать конфиг, подключение БД, ORM-модели raw-слоя и начальную миграцию Alembic
+- [x] Task 2: Реализовать конфиг, подключение БД, ORM-модели raw-слоя и начальную миграцию Alembic
 
 ### Checkpoint 1: Foundation
-- [ ] Контейнеры собираются и стартуют, `alembic upgrade head` проходит чисто, `pytest` запускается внутри контейнера
+- [x] Контейнеры собираются и стартуют, `alembic upgrade head` проходит чисто, `pytest` запускается внутри контейнера
 
 ### Phase 2: Politeness & Document Extractors
 - [ ] Task 3: Реализовать `PoliteHttpClient` (`robots.txt`, per-domain rate limit, ретраи) и офлайн-тесты

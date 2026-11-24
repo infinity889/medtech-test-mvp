@@ -56,7 +56,7 @@ migrate: db-up
 test-ingestion: db-up
 	podman run --rm --network $(NETWORK) -v $(CURDIR)/backend:/app:Z \
 		-e DATABASE_URL=$(TEST_DATABASE_URL) \
-		$(BACKEND_IMAGE) pytest $(PYTEST_ARGS) --cov=app.ingestion --cov-report=term-missing
+		$(BACKEND_IMAGE) sh -c "alembic upgrade head && pytest $(PYTEST_ARGS) --cov=app.ingestion --cov-report=term-missing"
 
 lint:
 	podman run --rm -v $(CURDIR)/backend:/app:Z \
