@@ -53,7 +53,7 @@ Task 1 (frontend/ scaffold: Node 22 Containerfile, React 19 + Vite 6 + Tailwind 
 - [x] Все пациентские экраны (`/`, `/map`, `/clinics/:id`, `/compare`, график истории цен) реализованы и покрыты тестами Vitest
 
 ### Phase 3: Admin UI & Live Browser Verification
-- [ ] Task 6: Реализовать `AdminPage` (`/admin`) — форма токена (`sessionStorage`), статистика, источники, ручной запуск парсинга с обработкой `409`, история запусков/ошибок и 1-клик разметка/игнорирование `unmatched` (+ тесты)
+- [x] Task 6: Реализовать `AdminPage` (`/admin`) — форма токена (`sessionStorage`), статистика, источники, ручной запуск парсинга с обработкой `409`, история запусков/ошибок и 1-клик разметка/игнорирование `unmatched` (+ тесты)
 - [ ] Task 7: Поднять `make api-up` + `make web-up` на живых данных `medprice`, провести проверку в реальном браузере (десктоп `1440px` и мобильный `375px`, 0 ошибок в консоли), обновить `README.md`
 
 ### Checkpoint 3: Module Complete (MVP Ready)

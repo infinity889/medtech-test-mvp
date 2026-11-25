@@ -157,13 +157,13 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-web-ui.md](../SPEC-
 **Description:** Реализовать защищённый экран оператора `/admin`: ввод `X-Admin-Token` (хранение в `sessionStorage`, кнопка «Выйти»), карточки статистики (`/admin/stats`), список источников и кнопку ручного запуска парсинга + нормализации (`POST /admin/scrape-runs` с обработкой `409 SCRAPE_IN_PROGRESS`), вкладки «Очередь разметки (`unmatched`)» с 1-клик кнопками «Привязать к подсказке» (`resolve`) и «Игнорировать» (`ignore`), а также вкладки «История запусков» и «Ошибки».
 
 **Acceptance criteria:**
-- [ ] Неверный токен (`401 UNAUTHORIZED`) показывает понятное сообщение и сбрасывает сессию.
-- [ ] Ошибка `409 SCRAPE_IN_PROGRESS` отображается как информационное предупреждение без падения интерфейса.
-- [ ] Кнопки `resolve` и `ignore` вызывают соответствующие POST-эндпоинты и обновляют список и счётчики.
+- [x] Неверный токен (`401 UNAUTHORIZED`) показывает понятное сообщение и сбрасывает сессию.
+- [x] Ошибка `409 SCRAPE_IN_PROGRESS` отображается как информационное предупреждение без падения интерфейса.
+- [x] Кнопки `resolve` и `ignore` вызывают соответствующие POST-эндпоинты и обновляют список и счётчики.
 
 **Verification:**
-- [ ] Tests pass: `make test-web` (`AdminPage.test.tsx`)
-- [ ] Checks pass: `make lint-web && make typecheck-web`
+- [x] Tests pass: `make test-web` (`AdminPage.test.tsx`)
+- [x] Checks pass: `make lint-web && make typecheck-web`
 
 **Dependencies:** Task 5
 

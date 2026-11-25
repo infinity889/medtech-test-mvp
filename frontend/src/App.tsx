@@ -3,18 +3,11 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { PriceHistoryDialog } from './components/PriceHistoryDialog';
 import { CompareProvider } from './context/CompareContext';
+import { AdminPage } from './pages/AdminPage';
 import { ClinicDetailPage } from './pages/ClinicDetailPage';
 import { ComparePage } from './pages/ComparePage';
 import { MapPage } from './pages/MapPage';
 import { SearchPage } from './pages/SearchPage';
-
-function PlaceholderPage({ title }: { title: string }) {
-  return (
-    <section className="rounded-xl border border-border bg-surface p-6">
-      <h1 className="text-xl font-semibold text-ink">{title}</h1>
-    </section>
-  );
-}
 
 interface HistoryModalState {
   serviceId: string;
@@ -39,7 +32,7 @@ export function App() {
             element={<ClinicDetailPage onOpenPriceHistory={openPriceHistory} />}
           />
           <Route path="/compare" element={<ComparePage />} />
-          <Route path="/admin" element={<PlaceholderPage title="Админ-панель" />} />
+          <Route path="/admin" element={<AdminPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
