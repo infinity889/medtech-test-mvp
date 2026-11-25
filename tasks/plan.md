@@ -47,10 +47,10 @@ Task 1 (frontend/ scaffold: Node 22 Containerfile, React 19 + Vite 6 + Tailwind 
 ### Phase 2: Patient Experience (Search, Map, Clinic Detail, Price History & Compare)
 - [x] Task 3: Реализовать `SearchPage` (`/`) — WAI-ARIA `SearchBar` с автодополнением, `FiltersPanel` с геолокацией и URL-синхронизацией, `OfferCard`, сводку цен, сортировку и пагинацию (+ тесты)
 - [x] Task 4: Реализовать переиспользуемый `ClinicMap` (Leaflet + OpenStreetMap), `MapPage` (`/map`), `ClinicDetailPage` (`/clinics/:clinicId`) и `PriceHistoryDialog` (нативный `<dialog>` + SVG-график) (+ тесты)
-- [ ] Task 5: Реализовать `ComparePage` (`/compare`) — матрица сравнения 2–5 клиник с фильтрацией по категории и подсветкой лучшей цены (+ тесты)
+- [x] Task 5: Реализовать `ComparePage` (`/compare`) — матрица сравнения 2–5 клиник с фильтрацией по категории и подсветкой лучшей цены (+ тесты)
 
 ### Checkpoint 2: Patient Flows Complete
-- [ ] Все пациентские экраны (`/`, `/map`, `/clinics/:id`, `/compare`, график истории цен) реализованы и покрыты тестами Vitest
+- [x] Все пациентские экраны (`/`, `/map`, `/clinics/:id`, `/compare`, график истории цен) реализованы и покрыты тестами Vitest
 
 ### Phase 3: Admin UI & Live Browser Verification
 - [ ] Task 6: Реализовать `AdminPage` (`/admin`) — форма токена (`sessionStorage`), статистика, источники, ручной запуск парсинга с обработкой `409`, история запусков/ошибок и 1-клик разметка/игнорирование `unmatched` (+ тесты)

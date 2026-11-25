@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { PriceHistoryDialog } from './components/PriceHistoryDialog';
 import { CompareProvider } from './context/CompareContext';
 import { ClinicDetailPage } from './pages/ClinicDetailPage';
+import { ComparePage } from './pages/ComparePage';
 import { MapPage } from './pages/MapPage';
 import { SearchPage } from './pages/SearchPage';
 
@@ -37,7 +38,7 @@ export function App() {
             path="/clinics/:clinicId"
             element={<ClinicDetailPage onOpenPriceHistory={openPriceHistory} />}
           />
-          <Route path="/compare" element={<PlaceholderPage title="Сравнение клиник" />} />
+          <Route path="/compare" element={<ComparePage />} />
           <Route path="/admin" element={<PlaceholderPage title="Админ-панель" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

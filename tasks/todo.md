@@ -128,13 +128,13 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-web-ui.md](../SPEC-
 **Description:** Реализовать страницу `ComparePage`, которая читает `clinic_ids` из URL (или из `CompareContext`), вызывает `GET /api/v1/compare`, строит адаптивную таблицу «услуга × клиники» с горизонтальной прокруткой на мобильных и фиксированным столбцом услуги, фильтром по категории, подсветкой `cheapest_clinic_id` (бейдж «Выгоднее» + иконка, не только цвет), датами обновления и кнопками удаления клиники из сравнения.
 
 **Acceptance criteria:**
-- [ ] При `< 2` выбранных клиник показывается понятное пустое состояние с переходом к поиску/карте.
-- [ ] Для 2–5 клиник отображается матрица цен с выделением лучшей цены в каждой строке и расчётом экономии.
-- [ ] Работает синхронизация `CompareDock` ↔ `/compare?clinic_ids=...`.
+- [x] При `< 2` выбранных клиник показывается понятное пустое состояние с переходом к поиску/карте.
+- [x] Для 2–5 клиник отображается матрица цен с выделением лучшей цены в каждой строке и расчётом экономии.
+- [x] Работает синхронизация `CompareDock` ↔ `/compare?clinic_ids=...`.
 
 **Verification:**
-- [ ] Tests pass: `make test-web` (`CompareFlow.test.tsx`)
-- [ ] Checks pass: `make lint-web && make typecheck-web`
+- [x] Tests pass: `make test-web` (`CompareFlow.test.tsx`)
+- [x] Checks pass: `make lint-web && make typecheck-web`
 
 **Dependencies:** Task 4
 
@@ -147,8 +147,8 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-web-ui.md](../SPEC-
 ---
 
 ## Checkpoint 2: After Tasks 3–5 (Patient Experience Complete)
-- [ ] Все пациентские экраны (`/`, `/map`, `/clinics/:id`, `/compare`, график истории цен) работают и покрыты тестами Vitest
-- [ ] `make lint-web`, `make typecheck-web`, `make build-web` зелёные
+- [x] Все пациентские экраны (`/`, `/map`, `/clinics/:id`, `/compare`, график истории цен) работают и покрыты тестами Vitest
+- [x] `make lint-web`, `make typecheck-web`, `make build-web` зелёные
 
 ---
 
