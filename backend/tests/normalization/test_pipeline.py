@@ -259,3 +259,107 @@ def test_pipeline_normalizes_converts_deduplicates_tracks_history_and_queues_unm
             session.execute(delete(ScrapeRun).where(ScrapeRun.id == run_id))
             session.commit()
         engine.dispose()
+
+
+def test_upsert_clinic_coalesces_null_address_with_enriched_address() -> None:
+    settings = Settings()
+    engine = create_db_engine(settings.database_url)
+    session_factory = create_session_factory(engine)
+    tag = uuid.uuid4().hex[:8]
+    src = f"coalesce_{tag}"
+    now = datetime.now(UTC)
+    run_id = uuid.uuid4()
+    cat_id = uuid.uuid4()
+
+    try:
+        with session_factory() as session:
+            session.add_all(
+                [
+                    ServiceCatalog(
+                        id=cat_id,
+                        code=f"lab_coal_{tag}",
+                        canonical_name=f"Тест {tag}",
+                        category=ServiceCategory.LAB,
+                        synonyms=[],
+                    ),
+                    ScrapeRun(
+                        id=run_id,
+                        source_id=src,
+                        triggered_by=TriggerSource.MANUAL,
+                        status=ScrapeStatus.SUCCESS,
+                        started_at=now,
+                    ),
+                ]
+            )
+            session.flush()
+            session.add_all(
+                [
+                    RawServiceRecord(
+                        id=uuid.uuid4(),
+                        source_id=src,
+                        source_url="https://lab.kz/1",
+                        record_fingerprint=f"c1_{tag}",
+                        clinic_name_raw="Сеть Лаб",
+                        city_raw="Алматы",
+                        address_raw=None,
+                        service_name_raw=f"Тест {tag}",
+                        category_hint="лаборатория",
+                        price_raw=Decimal("2000.00"),
+                        currency_raw="KZT",
+                        raw_payload={},
+                        first_seen_at=now - timedelta(hours=1),
+                        last_seen_at=now - timedelta(hours=1),
+                        parsed_at=now - timedelta(hours=1),
+                        last_run_id=run_id,
+                    ),
+                    RawServiceRecord(
+                        id=uuid.uuid4(),
+                        source_id=src,
+                        source_url="https://lab.kz/1",
+                        record_fingerprint=f"c2_{tag}",
+                        clinic_name_raw="Сеть Лаб",
+                        city_raw="Алматы",
+                        address_raw="ул. Майлина, 38а",
+                        working_hours_raw="Пн-Пт 08:00-17:00",
+                        latitude=43.34,
+                        longitude=77.00,
+                        service_name_raw=f"Тест {tag}",
+                        category_hint="лаборатория",
+                        price_raw=Decimal("2000.00"),
+                        currency_raw="KZT",
+                        raw_payload={},
+                        first_seen_at=now,
+                        last_seen_at=now,
+                        parsed_at=now,
+                        last_run_id=run_id,
+                    ),
+                ]
+            )
+            session.commit()
+
+        ingestion_svc = IngestionService(
+            session_factory=session_factory, registry=AdapterRegistry(), settings=settings
+        )
+        pipeline = NormalizationPipeline(
+            session_factory=session_factory, ingestion_service=ingestion_svc, settings=settings
+        )
+        pipeline.run(source_id=src)
+
+        with session_factory() as session:
+            clinics = list(session.scalars(select(Clinic).where(Clinic.source_id == src)))
+            assert len(clinics) == 1
+            assert clinics[0].address == "ул. Майлина, 38а"
+            assert clinics[0].latitude == 43.34
+    finally:
+        with session_factory() as session:
+            clinic_ids = list(session.scalars(select(Clinic.id).where(Clinic.source_id == src)))
+            if clinic_ids:
+                session.execute(delete(PriceHistory).where(PriceHistory.clinic_id.in_(clinic_ids)))
+            session.execute(delete(UnmatchedService).where(UnmatchedService.source_id == src))
+            session.execute(delete(ServiceOffer).where(ServiceOffer.source_id == src))
+            session.execute(delete(Clinic).where(Clinic.source_id == src))
+            session.execute(delete(ServiceCatalog).where(ServiceCatalog.id == cat_id))
+            session.execute(delete(RawServiceRecord).where(RawServiceRecord.source_id == src))
+            session.execute(delete(ScrapeRun).where(ScrapeRun.id == run_id))
+            session.commit()
+        engine.dispose()

@@ -7,8 +7,8 @@
 Проект разрабатывается строго по Spec-Driven Development — см. [CAPABILITY-MAP.md](./CAPABILITY-MAP.md):
 
 1. **`ingestion`** ([SPEC-ingestion.md](./SPEC-ingestion.md)) — сбор прайс-листов из публичных источников, соблюдение `robots.txt` и rate-limit, raw-слой PostgreSQL (ретеншн ≥ 90 дней), экстракторы HTML/PDF/DOCX/Excel, дедупликация, журнал ошибок, CLI и планировщик.
-2. **`normalization`** *(следующий этап)* — справочник услуг, детерминированная нормализация (словарь + RapidFuzz), `unmatched queue`, история цен.
-3. **`search-api`** *(запланирован)* — REST API поиска, фильтрации, сортировки и админки.
+2. **`normalization`** ([SPEC-normalization.md](./SPEC-normalization.md)) — справочник из 88 канонических услуг по 4 категориям, детерминированный матчер (`exact` → `synonym` → категорийно-изолированный `RapidFuzz`), конвертация `USD → KZT` (`Decimal`), дедуплицированные клиники и предложения, история цен (`price_history`), очередь ручной разметки (`unmatched_services`) и правило актуальности ≤ 30 дней.
+3. **`search-api`** *(следующий этап)* — REST API поиска, фильтрации, сортировки и админки.
 4. **`web-ui`** *(запланирован)* — адаптивный интерфейс (React + Vite + Leaflet).
 
 ## Подключённые открытые источники (`ingestion`)
@@ -33,16 +33,20 @@ make backend-build
 make db-up
 make migrate
 
-# 3. Запустить офлайн-тесты модуля ingestion с покрытием + проверки качества
-make test-ingestion
+# 3. Запустить все офлайн-тесты (ingestion + normalization) с покрытием + проверки качества
+make test-all
 make lint
 make typecheck
 
 # 4. Запустить сбор реальных данных по всем 3 источникам (опционально --limit N)
-make ingest SOURCE=all EXTRA_ARGS="--limit 200"
+make ingest SOURCE=all EXTRA_ARGS="--limit 600"
 
-# Просмотреть зарегистрированные источники
+# 5. Загрузить справочник услуг (88 позиций) и выполнить нормализацию raw → normalized
+make seed-catalog
+make normalize
+
+# Просмотреть статистику нормализованного слоя
 podman run --rm --network medprice-net -v $(pwd)/backend:/app:Z \
   -e DATABASE_URL=postgresql+psycopg://medprice:medprice@medprice-pg:5432/medprice \
-  medprice-backend:dev python -m app.ingestion.cli list-sources
+  medprice-backend:dev python -m app.normalization.cli stats
 ```

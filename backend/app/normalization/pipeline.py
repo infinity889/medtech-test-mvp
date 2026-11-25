@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from urllib.parse import urlparse
@@ -28,6 +29,33 @@ from app.normalization.models import (
 from app.normalization.schemas import NormalizationSummary
 from app.normalization.text_utils import compute_clinic_key, convert_to_kzt
 
+_SAME_RUN_WINDOW = timedelta(hours=1)
+
+
+@dataclass(slots=True)
+class _WinningCandidate:
+    clinic_id: uuid.UUID
+    service_id: uuid.UUID
+    canonical_name: str
+    category: ServiceCategory
+    raw: RawServiceRecordDTO
+    price_kzt: Decimal
+    currency: CurrencyCode
+    match_method: MatchMethod
+    match_score: float
+
+
+def _is_better_candidate(incumbent: _WinningCandidate, challenger: _WinningCandidate) -> bool:
+    """Pick the newer scrape; within the same scrape window (<=1h), prefer the lower price."""
+    delta = challenger.raw.parsed_at - incumbent.raw.parsed_at
+    if delta > _SAME_RUN_WINDOW:
+        return True
+    if delta < -_SAME_RUN_WINDOW:
+        return False
+    if challenger.price_kzt != incumbent.price_kzt:
+        return challenger.price_kzt < incumbent.price_kzt
+    return challenger.raw.parsed_at > incumbent.raw.parsed_at
+
 
 def _extract_website_origin(source_url: str) -> str | None:
     parsed = urlparse(source_url)
@@ -37,20 +65,44 @@ def _extract_website_origin(source_url: str) -> str | None:
 
 
 def upsert_clinic(session: Session, raw: RawServiceRecordDTO) -> Clinic:
-    """Upsert a deduplicated clinic/branch entity preserving non-null metadata."""
-    key = compute_clinic_key(raw.source_id, raw.clinic_name_raw, raw.city_raw, raw.address_raw)
+    """Upsert a deduplicated clinic/branch entity, coalescing null-address rows cleanly."""
+    clean_name = raw.clinic_name_raw.strip()
+    clean_city = raw.city_raw.strip()
+    clean_addr = raw.address_raw.strip() if raw.address_raw else None
+
+    key = compute_clinic_key(raw.source_id, clean_name, clean_city, clean_addr)
     clinic = session.scalar(select(Clinic).where(Clinic.clinic_key == key))
     now = datetime.now(UTC)
     origin = _extract_website_origin(raw.source_url)
+
+    # Coalesce with a previously null-address row for the same (source, clinic, city)
+    if clinic is None and clean_addr is not None:
+        null_addr_key = compute_clinic_key(raw.source_id, clean_name, clean_city, None)
+        clinic = session.scalar(select(Clinic).where(Clinic.clinic_key == null_addr_key))
+        if clinic is not None:
+            clinic.address = clean_addr
+            clinic.clinic_key = key
+
+    # If incoming record lacks address, attach to an existing enriched row for same clinic+city
+    if clinic is None and clean_addr is None:
+        clinic = session.scalar(
+            select(Clinic)
+            .where(
+                Clinic.source_id == raw.source_id,
+                Clinic.clinic_name == clean_name,
+                Clinic.city == clean_city,
+            )
+            .limit(1)
+        )
 
     if clinic is None:
         clinic = Clinic(
             id=uuid.uuid4(),
             source_id=raw.source_id,
             clinic_key=key,
-            clinic_name=raw.clinic_name_raw.strip(),
-            city=raw.city_raw.strip(),
-            address=raw.address_raw.strip() if raw.address_raw else None,
+            clinic_name=clean_name,
+            city=clean_city,
+            address=clean_addr,
             phone=raw.phone_raw.strip() if raw.phone_raw else None,
             working_hours=raw.working_hours_raw.strip() if raw.working_hours_raw else None,
             latitude=raw.latitude,
@@ -164,28 +216,42 @@ def upsert_service_offer_and_history(
     existing.parsed_at = raw.parsed_at
     existing.is_active = is_fresh
 
-    last_history = session.scalar(
+    existing_at_ts = session.scalar(
         select(PriceHistory)
         .where(
             PriceHistory.clinic_id == clinic.id,
             PriceHistory.service_id == service_id,
+            PriceHistory.recorded_at == raw.parsed_at,
         )
-        .order_by(desc(PriceHistory.recorded_at), desc(PriceHistory.id))
         .limit(1)
     )
     history_added = False
-    if last_history is None or last_history.price_kzt != price_kzt:
-        session.add(
-            PriceHistory(
-                id=uuid.uuid4(),
-                clinic_id=clinic.id,
-                service_id=service_id,
-                offer_id=existing.id,
-                price_kzt=price_kzt,
-                recorded_at=raw.parsed_at,
+    if existing_at_ts is not None:
+        if existing_at_ts.price_kzt != price_kzt:
+            existing_at_ts.price_kzt = price_kzt
+            existing_at_ts.offer_id = existing.id
+    else:
+        last_history = session.scalar(
+            select(PriceHistory)
+            .where(
+                PriceHistory.clinic_id == clinic.id,
+                PriceHistory.service_id == service_id,
             )
+            .order_by(desc(PriceHistory.recorded_at), desc(PriceHistory.id))
+            .limit(1)
         )
-        history_added = True
+        if last_history is None or last_history.price_kzt != price_kzt:
+            session.add(
+                PriceHistory(
+                    id=uuid.uuid4(),
+                    clinic_id=clinic.id,
+                    service_id=service_id,
+                    offer_id=existing.id,
+                    price_kzt=price_kzt,
+                    recorded_at=raw.parsed_at,
+                )
+            )
+            history_added = True
 
     return existing, False, True, history_added
 
@@ -236,6 +302,7 @@ class NormalizationPipeline:
         now = datetime.now(UTC)
         freshness_cutoff = now - timedelta(days=self._settings.offer_max_age_days)
         seen_clinic_ids: set[uuid.UUID] = set()
+        winners: dict[tuple[uuid.UUID, uuid.UUID], _WinningCandidate] = {}
 
         with self._session_factory() as session:
             matcher = self._build_matcher(session)
@@ -273,10 +340,9 @@ class NormalizationPipeline:
                         clinic = upsert_clinic(session, raw)
                         seen_clinic_ids.add(clinic.id)
 
-                        is_fresh = raw.parsed_at >= freshness_cutoff
-                        _, inserted, updated, hist_added = upsert_service_offer_and_history(
-                            session,
-                            clinic=clinic,
+                        pair_key = (clinic.id, match.service_id)
+                        candidate = _WinningCandidate(
+                            clinic_id=clinic.id,
                             service_id=match.service_id,
                             canonical_name=match.canonical_name,
                             category=match.category,
@@ -285,14 +351,12 @@ class NormalizationPipeline:
                             currency=currency,
                             match_method=match.method,
                             match_score=match.score,
-                            is_fresh=is_fresh,
                         )
-                        if inserted:
-                            summary.offers_inserted += 1
-                        elif updated:
-                            summary.offers_updated += 1
-                        if hist_added:
-                            summary.price_history_points_added += 1
+                        existing_winner = winners.get(pair_key)
+                        if existing_winner is None or _is_better_candidate(
+                            existing_winner, candidate
+                        ):
+                            winners[pair_key] = candidate
 
                         # If this raw record was previously pending in unmatched queue, resolve it
                         prev_unmatched = session.scalar(
@@ -335,6 +399,34 @@ class NormalizationPipeline:
                             existing_unmatched.suggested_score = match.suggested_score
 
                 session.commit()
+
+        # Materialize one winning offer + clean price history point per (clinic_id, service_id)
+        with self._session_factory() as session:
+            for winner in winners.values():
+                clinic_row = session.get(Clinic, winner.clinic_id)
+                if clinic_row is None:
+                    continue
+                is_fresh = winner.raw.parsed_at >= freshness_cutoff
+                _, inserted, updated, hist_added = upsert_service_offer_and_history(
+                    session,
+                    clinic=clinic_row,
+                    service_id=winner.service_id,
+                    canonical_name=winner.canonical_name,
+                    category=winner.category,
+                    raw=winner.raw,
+                    price_kzt=winner.price_kzt,
+                    currency=winner.currency,
+                    match_method=winner.match_method,
+                    match_score=winner.match_score,
+                    is_fresh=is_fresh,
+                )
+                if inserted:
+                    summary.offers_inserted += 1
+                elif updated:
+                    summary.offers_updated += 1
+                if hist_added:
+                    summary.price_history_points_added += 1
+            session.commit()
 
         summary.clinics_upserted = len(seen_clinic_ids)
         return summary

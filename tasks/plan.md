@@ -60,10 +60,10 @@ Task 1 (rapidfuzz in Containerfile/pyproject + Settings + Makefile)
 - [x] Интеграционные тесты против PostgreSQL подтверждают 0 дублей при повторе, версионирование `price_history`, обратную связь синонимов и деактивацию > 30 дней
 
 ### Phase 4: Live Verification on Real KZ Data
-- [ ] Task 8: Прогнать `make seed-catalog && make normalize` на 2 625 реальных raw-записях, проверить межклинические пересечения, идемпотентность, покрытие ≥ 85% и обновить `README.md`
+- [x] Task 8: Прогнать `make seed-catalog && make normalize` на 2 625 реальных raw-записях, проверить межклинические пересечения, идемпотентность, покрытие ≥ 85% и обновить `README.md`
 
 ### Checkpoint 4: Module Complete
-- [ ] Все 8 критериев успеха из `SPEC-normalization.md` выполнены, покрытие ≥ 85%, `ruff` и `mypy` чистые
+- [x] Все 8 критериев успеха из `SPEC-normalization.md` выполнены, покрытие ≥ 85%, `ruff` и `mypy` чистые
 - [ ] Ревью с человеком перед переходом к `SPEC-search-api.md`
 
 ## Parallelization Opportunities

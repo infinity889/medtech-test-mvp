@@ -206,15 +206,15 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](.
 **Description:** Применить миграцию `0002` на `medprice`, выполнить `make seed-catalog && make normalize` на реальных 2 625 записях из `kdlolymp`, `invivo` и `doq`, проверить качество матчинга и реальные межклинические сравнения цен (одна услуга в нескольких клиниках/лабораториях), проверить идемпотентность повторного `make normalize`, подтвердить покрытие ≥ 85% и обновить `README.md`.
 
 **Acceptance criteria:**
-- [ ] В `service_catalog` загружено ≥ 65 позиций по 4 категориям.
-- [ ] В `service_offers` есть реальные нормализованные предложения по всем 3 источникам (`kdlolymp`, `invivo`, `doq`) и реальные пересечения цен между клиниками по ключевым услугам (напр. ОАК, ОАМ, ТТГ, Ферритин, Терапевт, Кардиолог, УЗИ).
-- [ ] Повторный `make normalize` даёт 0 новых дублей в `clinics`, `service_offers`, `price_history`, `unmatched_services`.
-- [ ] Покрытие `make test-normalization` ≥ 85%, все тесты (`ingestion` + `normalization`), `ruff` и `mypy` зелёные.
+- [x] В `service_catalog` загружено ≥ 65 позиций по 4 категориям.
+- [x] В `service_offers` есть реальные нормализованные предложения по всем 3 источникам (`kdlolymp`, `invivo`, `doq`) и реальные пересечения цен между клиниками по ключевым услугам (напр. ОАК, ОАМ, ТТГ, Ферритин, Терапевт, Кардиолог, УЗИ).
+- [x] Повторный `make normalize` даёт 0 новых дублей в `clinics`, `service_offers`, `price_history`, `unmatched_services`.
+- [x] Покрытие `make test-normalization` ≥ 85%, все тесты (`ingestion` + `normalization`), `ruff` и `mypy` зелёные.
 
 **Verification:**
-- [ ] Tests pass: `make test-all`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: SQL-отчёт по `service_offers`, `clinics`, `price_history`, `unmatched_services` и пример сравнения цен по «Общий анализ крови (ОАК)» и «Приём терапевта»
+- [x] Tests pass: `make test-all`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: SQL-отчёт по `service_offers`, `clinics`, `price_history`, `unmatched_services` и пример сравнения цен по «Общий анализ крови (ОАК)» и «Приём терапевта»
 
 **Dependencies:** Task 7
 
@@ -227,5 +227,5 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](.
 ---
 
 ## Checkpoint 4: After Task 8 (Module Complete)
-- [ ] Все 8 критериев успеха из [SPEC-normalization.md](../SPEC-normalization.md) выполнены и подтверждены
+- [x] Все 8 критериев успеха из [SPEC-normalization.md](../SPEC-normalization.md) выполнены и подтверждены
 - [ ] Готово к ревью пользователя и переходу к `SPEC-search-api.md`
