@@ -47,10 +47,10 @@ Task 1 (rapidfuzz in Containerfile/pyproject + Settings + Makefile)
 ### Phase 2: Dictionary & Matching Engine
 - [x] Task 3: Реализовать нормализацию текста и конвертацию валют `KZT`/`USD → KZT` (`text_utils.py`)
 - [x] Task 4: Сформировать курируемый справочник `catalog_seed.json` (65–80 услуг по 4 категориям на базе реальных данных РК)
-- [ ] Task 5: Реализовать детерминированный `ServiceMatcher` (`exact` → `synonym` → `RapidFuzz`)
+- [x] Task 5: Реализовать детерминированный `ServiceMatcher` (`exact` → `synonym` → `RapidFuzz`)
 
 ### Checkpoint 2: Dictionary & Matching Engine
-- [ ] Справочник ≥ 50 позиций и матчер (включая кейс `ОАК`/`CBC` и категорийную изоляцию) покрыты юнит-тестами, `ruff` и `mypy` чистые
+- [x] Справочник ≥ 50 позиций и матчер (включая кейс `ОАК`/`CBC` и категорийную изоляцию) покрыты юнит-тестами, `ruff` и `mypy` чистые
 
 ### Phase 3: Pipeline, Public Contract & CLI
 - [ ] Task 6: Реализовать DTO (`schemas.py`) и `NormalizationPipeline` (клиники, предложения, `price_history`, `unmatched_services`)

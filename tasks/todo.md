@@ -117,15 +117,15 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](.
 **Description:** Реализовать матчер `ServiceMatcher`, индексирующий канонические названия и синонимы справочника в памяти, и выполняющий 3-ступенчатый поиск: 1) `exact` по нормализованному `canonical_name`, 2) `synonym` по нормализованным синонимам, 3) категорийно-изолированный `RapidFuzz` (`fuzz.token_sort_ratio` / `fuzz.ratio` с защитой от коротких ложных совпадений типа `АЛТ`/`АСТ`) с порогом авто-матча `86.0` и подсказкой кандидата `>= 60.0`.
 
 **Acceptance criteria:**
-- [ ] «ОАК», «Общий анализ крови», «CBC», «Клинический анализ крови» и реальные названия из `kdlolymp`/`invivo` сводятся к одной услуге `Общий анализ крови (ОАК)`.
-- [ ] Услуги с известным `category_hint` никогда не матчатся через `RapidFuzz` с другой категорией (напр. `lab` не склеивается с `doctor`).
-- [ ] Похожие, но разные короткие анализы (`АЛТ` vs `АСТ`, `Т3` vs `Т4`, `Витамин D` vs `Витамин B12`) не склеиваются ошибочно.
-- [ ] Нераспознанная услуга возвращает `is_matched == False` и заполняет `suggested_service_id` / `suggested_score`, если лучший кандидат `>= 60.0`.
+- [x] «ОАК», «Общий анализ крови», «CBC», «Клинический анализ крови» и реальные названия из `kdlolymp`/`invivo` сводятся к одной услуге `Общий анализ крови (ОАК)`.
+- [x] Услуги с известным `category_hint` никогда не матчатся через `RapidFuzz` с другой категорией (напр. `lab` не склеивается с `doctor`).
+- [x] Похожие, но разные короткие анализы (`АЛТ` vs `АСТ`, `Т3` vs `Т4`, `Витамин D` vs `Витамин B12`) не склеиваются ошибочно.
+- [x] Нераспознанная услуга возвращает `is_matched == False` и заполняет `suggested_service_id` / `suggested_score`, если лучший кандидат `>= 60.0`.
 
 **Verification:**
-- [ ] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_matcher.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: проверить точность на наборе из ≥ 15 реальных названий из `kdlolymp`, `invivo`, `doq`
+- [x] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_matcher.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: проверить точность на наборе из ≥ 15 реальных названий из `kdlolymp`, `invivo`, `doq`
 
 **Dependencies:** Tasks 3, 4
 
@@ -138,8 +138,8 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](.
 ---
 
 ## Checkpoint 2: After Tasks 3–5 (Dictionary & Matching Engine)
-- [ ] `text_utils`, `catalog_seed.json` (≥ 65 позиций) и `ServiceMatcher` полностью протестированы
-- [ ] `ruff check` и `mypy --strict` проходят без ошибок
+- [x] `text_utils`, `catalog_seed.json` (≥ 65 позиций) и `ServiceMatcher` полностью протестированы
+- [x] `ruff check` и `mypy --strict` проходят без ошибок
 
 ---
 
