@@ -9,14 +9,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-search-api.md](../S
 **Description:** Добавить `fastapi>=0.115.0,<1.0` и `uvicorn[standard]>=0.32.0,<1.0` в `backend/pyproject.toml`, расширить `Settings` (`admin_api_token`, `cors_origins`, `api_host`, `api_port`), добавить цели `api-up`, `api-down`, `api-dev`, `test-api` в `Makefile`, создать `backend/app/api/__init__.py` и пересобрать контейнер `medprice-backend:dev`.
 
 **Acceptance criteria:**
-- [ ] `fastapi` и `uvicorn` импортируются внутри контейнера `medprice-backend:dev`.
-- [ ] `Settings` предоставляет `admin_api_token` (дефолт `dev-admin-token`), `cors_origins_list` и `api_port` (дефолт `8000`).
-- [ ] Все существующие 91 тест (`ingestion` + `normalization`), `ruff` и `mypy` зелёные.
+- [x] `fastapi` и `uvicorn` импортируются внутри контейнера `medprice-backend:dev`.
+- [x] `Settings` предоставляет `admin_api_token` (дефолт `dev-admin-token`), `cors_origins_list` и `api_port` (дефолт `8000`).
+- [x] Все существующие 91 тест (`ingestion` + `normalization`), `ruff` и `mypy` зелёные.
 
 **Verification:**
-- [ ] Build succeeds: `make backend-build`
-- [ ] Tests pass: `make test-all && make lint && make typecheck`
-- [ ] Manual check: `podman run --rm medprice-backend:dev python -c "import fastapi, uvicorn; print(fastapi.__version__)"`
+- [x] Build succeeds: `make backend-build`
+- [x] Tests pass: `make test-all && make lint && make typecheck`
+- [x] Manual check: `podman run --rm medprice-backend:dev python -c "import fastapi, uvicorn; print(fastapi.__version__)"`
 
 **Dependencies:** None
 

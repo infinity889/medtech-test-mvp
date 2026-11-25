@@ -1,8 +1,9 @@
 SHELL := /usr/bin/env bash
-.PHONY: net-up db-up db-down backend-build migrate test-ingestion test-normalization test-all lint typecheck ingest seed-catalog normalize
+.PHONY: net-up db-up db-down backend-build migrate test-ingestion test-normalization test-api test-all lint typecheck ingest seed-catalog normalize api-up api-down api-dev
 
 NETWORK := medprice-net
 PG_CONTAINER := medprice-pg
+API_CONTAINER := medprice-api
 PG_IMAGE := docker.io/library/postgres:16-alpine
 BACKEND_IMAGE := medprice-backend:dev
 
@@ -16,6 +17,7 @@ TEST_DATABASE_URL := postgresql+psycopg://$(PG_USER):$(PG_PASSWORD)@$(PG_CONTAIN
 
 PYTEST_ARGS ?= tests/ingestion
 NORM_PYTEST_ARGS ?= tests/normalization
+API_PYTEST_ARGS ?= tests/api
 SOURCE ?= all
 EXTRA_ARGS ?=
 
@@ -64,6 +66,11 @@ test-normalization: db-up
 		-e DATABASE_URL=$(TEST_DATABASE_URL) \
 		$(BACKEND_IMAGE) sh -c "alembic upgrade head && pytest $(NORM_PYTEST_ARGS) --cov=app.normalization --cov-report=term-missing"
 
+test-api: db-up
+	podman run --rm --network $(NETWORK) -v $(CURDIR)/backend:/app:Z \
+		-e DATABASE_URL=$(TEST_DATABASE_URL) \
+		$(BACKEND_IMAGE) sh -c "alembic upgrade head && pytest $(API_PYTEST_ARGS) --cov=app.api --cov=app.main --cov-report=term-missing"
+
 test-all: db-up
 	podman run --rm --network $(NETWORK) -v $(CURDIR)/backend:/app:Z \
 		-e DATABASE_URL=$(TEST_DATABASE_URL) \
@@ -91,3 +98,20 @@ normalize: db-up
 	podman run --rm --network $(NETWORK) -v $(CURDIR)/backend:/app:Z \
 		-e DATABASE_URL=$(DATABASE_URL) \
 		$(BACKEND_IMAGE) python -m app.normalization.cli run $(EXTRA_ARGS)
+
+api-up: db-up
+	@podman rm -f $(API_CONTAINER) >/dev/null 2>&1 || true
+	podman run -d --name $(API_CONTAINER) --network $(NETWORK) \
+		-v $(CURDIR)/backend:/app:Z \
+		-e DATABASE_URL=$(DATABASE_URL) \
+		-p 8000:8000 $(BACKEND_IMAGE) \
+		uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+api-down:
+	@podman rm -f $(API_CONTAINER) >/dev/null 2>&1 || true
+
+api-dev: db-up
+	podman run --rm -it --network $(NETWORK) -v $(CURDIR)/backend:/app:Z \
+		-e DATABASE_URL=$(DATABASE_URL) \
+		-p 8000:8000 $(BACKEND_IMAGE) \
+		uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

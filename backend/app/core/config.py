@@ -73,6 +73,21 @@ class Settings(BaseSettings):
         alias="OFFER_MAX_AGE_DAYS",
         ge=1,
     )
+    admin_api_token: str = Field(
+        default="dev-admin-token",
+        alias="ADMIN_API_TOKEN",
+        min_length=4,
+    )
+    cors_origins: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173",
+        alias="CORS_ORIGINS",
+    )
+    api_host: str = Field(default="0.0.0.0", alias="API_HOST")
+    api_port: int = Field(default=8000, alias="API_PORT", ge=1, le=65535)
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     @model_validator(mode="after")
     def _validate_fuzzy_thresholds(self) -> "Settings":

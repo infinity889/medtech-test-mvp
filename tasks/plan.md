@@ -35,7 +35,7 @@ Task 1 (fastapi + uvicorn in pyproject/container, API Settings, Makefile targets
 Подробные карточки задач находятся в [tasks/todo.md](./todo.md).
 
 ### Phase 1: Foundation & App Shell
-- [ ] Task 1: Добавить `fastapi` и `uvicorn[standard]`, настройки API в `Settings`, цели `api-up`/`api-down`/`test-api` в `Makefile` и пересобрать контейнер
+- [x] Task 1: Добавить `fastapi` и `uvicorn[standard]`, настройки API в `Settings`, цели `api-up`/`api-down`/`test-api` в `Makefile` и пересобрать контейнер
 - [ ] Task 2: Реализовать `schemas.py`, `errors.py`, `deps.py`, `main.py` и `routes/health.py` (`/health`, CORS, `APIError`, `X-Admin-Token`)
 
 ### Checkpoint 1: Foundation
