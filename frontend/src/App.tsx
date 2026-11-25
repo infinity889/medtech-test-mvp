@@ -1,6 +1,10 @@
+import { useState } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
+import { PriceHistoryDialog } from './components/PriceHistoryDialog';
 import { CompareProvider } from './context/CompareContext';
+import { ClinicDetailPage } from './pages/ClinicDetailPage';
+import { MapPage } from './pages/MapPage';
 import { SearchPage } from './pages/SearchPage';
 
 function PlaceholderPage({ title }: { title: string }) {
@@ -11,18 +15,38 @@ function PlaceholderPage({ title }: { title: string }) {
   );
 }
 
+interface HistoryModalState {
+  serviceId: string;
+  serviceName: string;
+}
+
 export function App() {
+  const [historyModal, setHistoryModal] = useState<HistoryModalState | null>(null);
+
+  function openPriceHistory(serviceId: string, serviceName: string) {
+    setHistoryModal({ serviceId, serviceName });
+  }
+
   return (
     <CompareProvider>
       <Layout>
         <Routes>
-          <Route path="/" element={<SearchPage />} />
-          <Route path="/map" element={<PlaceholderPage title="Карта клиник" />} />
-          <Route path="/clinics/:clinicId" element={<PlaceholderPage title="Карточка клиники" />} />
+          <Route path="/" element={<SearchPage onOpenPriceHistory={openPriceHistory} />} />
+          <Route path="/map" element={<MapPage />} />
+          <Route
+            path="/clinics/:clinicId"
+            element={<ClinicDetailPage onOpenPriceHistory={openPriceHistory} />}
+          />
           <Route path="/compare" element={<PlaceholderPage title="Сравнение клиник" />} />
           <Route path="/admin" element={<PlaceholderPage title="Админ-панель" />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+
+        <PriceHistoryDialog
+          serviceId={historyModal?.serviceId ?? null}
+          serviceName={historyModal?.serviceName ?? ''}
+          onClose={() => setHistoryModal(null)}
+        />
       </Layout>
     </CompareProvider>
   );

@@ -102,13 +102,13 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-web-ui.md](../SPEC-
 **Description:** Реализовать переиспользуемый компонент карты `ClinicMap` (Leaflet + OpenStreetMap, кастомные клинические `divIcon` маркеры, `fitBounds`, попапы со ссылками на карточку, 2GIS и Google Maps), страницу `MapPage` (`/map`, фильтр по городу/поиску, список клиник + карта), страницу `ClinicDetailPage` (`/clinics/:clinicId`, контакты, график, мини-карта, кнопки 2GIS/Google Maps, добавление в сравнение, таблица всех актуальных услуг с поиском/фильтром по категории) и `PriceHistoryDialog` (нативный `<dialog>` с `showModal()`, выбором периода `30`/`90`/`365` дней и адаптивным SVG-графиком истории цен).
 
 **Acceptance criteria:**
-- [ ] `MapPage` отображает клиники с GPS (`has_geo=true`), фильтрует по городу и показывает ссылки маршрутов 2GIS / Google Maps.
-- [ ] `ClinicDetailPage` загружает карточку клиники, отображает контакты, маршруты и таблицу услуг с датами обновления (`404` → понятное состояние ошибки).
-- [ ] `PriceHistoryDialog` открывается в нативном `<dialog>`, строит SVG-график по точкам `GET /api/v1/services/{id}/price-history` и корректно переключает период.
+- [x] `MapPage` отображает клиники с GPS (`has_geo=true`), фильтрует по городу и показывает ссылки маршрутов 2GIS / Google Maps.
+- [x] `ClinicDetailPage` загружает карточку клиники, отображает контакты, маршруты и таблицу услуг с датами обновления (`404` → понятное состояние ошибки).
+- [x] `PriceHistoryDialog` открывается в нативном `<dialog>`, строит SVG-график по точкам `GET /api/v1/services/{id}/price-history` и корректно переключает период.
 
 **Verification:**
-- [ ] Tests pass: `make test-web` (`ClinicAndHistory.test.tsx`)
-- [ ] Checks pass: `make lint-web && make typecheck-web`
+- [x] Tests pass: `make test-web` (`ClinicAndHistory.test.tsx`)
+- [x] Checks pass: `make lint-web && make typecheck-web`
 
 **Dependencies:** Task 3
 
