@@ -75,14 +75,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-web-ui.md](../SPEC-
 **Description:** Реализовать `SearchBar` (WAI-ARIA combobox с debounce-запросом `/api/v1/services/autocomplete`, клавиатурой `↑`/`↓`/`Enter`/`Esc` и отображением `offers_count` + `min_price_kzt`), `FiltersPanel` (город, категория, мин/макс цена, мин. рейтинг, онлайн-запись, кнопка «Рядом со мной» через `navigator.geolocation`, мобильный выдвижной блок), `OfferCard` (каноническое и оригинальное название, цена с бейджем «Лучшая цена», срок, рейтинг, `parsed_at`, ссылка на источник, кнопки «История цен» и «Сравнить») и `SearchPage` с синхронизацией URL `searchParams`, сводкой цен, сортировкой и пагинацией.
 
 **Acceptance criteria:**
-- [ ] Ввод `ОАК` или `CBC` открывает список подсказок автодополнения и позволяет выбрать услугу мышью или клавиатурой.
-- [ ] Все фильтры и сортировки синхронизируются с URL и отправляют корректные параметры в `GET /api/v1/offers`.
-- [ ] Каждая карточка показывает дату последнего обновления (`parsed_at`) и ссылку на первоисточник.
-- [ ] Обработаны состояния загрузки (skeleton), пустой выдачи, ошибки сети и отказа геолокации.
+- [x] Ввод `ОАК` или `CBC` открывает список подсказок автодополнения и позволяет выбрать услугу мышью или клавиатурой.
+- [x] Все фильтры и сортировки синхронизируются с URL и отправляют корректные параметры в `GET /api/v1/offers`.
+- [x] Каждая карточка показывает дату последнего обновления (`parsed_at`) и ссылку на первоисточник.
+- [x] Обработаны состояния загрузки (skeleton), пустой выдачи, ошибки сети и отказа геолокации.
 
 **Verification:**
-- [ ] Tests pass: `make test-web` (`SearchPage.test.tsx`)
-- [ ] Checks pass: `make lint-web && make typecheck-web`
+- [x] Tests pass: `make test-web` (`SearchPage.test.tsx`)
+- [x] Checks pass: `make lint-web && make typecheck-web`
 
 **Dependencies:** Task 2
 

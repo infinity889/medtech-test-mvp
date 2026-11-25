@@ -45,7 +45,7 @@ Task 1 (frontend/ scaffold: Node 22 Containerfile, React 19 + Vite 6 + Tailwind 
 - [x] Образ `medprice-web:dev` собран, `make test-web`, `make lint-web`, `make typecheck-web`, `make build-web` зелёные
 
 ### Phase 2: Patient Experience (Search, Map, Clinic Detail, Price History & Compare)
-- [ ] Task 3: Реализовать `SearchPage` (`/`) — WAI-ARIA `SearchBar` с автодополнением, `FiltersPanel` с геолокацией и URL-синхронизацией, `OfferCard`, сводку цен, сортировку и пагинацию (+ тесты)
+- [x] Task 3: Реализовать `SearchPage` (`/`) — WAI-ARIA `SearchBar` с автодополнением, `FiltersPanel` с геолокацией и URL-синхронизацией, `OfferCard`, сводку цен, сортировку и пагинацию (+ тесты)
 - [ ] Task 4: Реализовать переиспользуемый `ClinicMap` (Leaflet + OpenStreetMap), `MapPage` (`/map`), `ClinicDetailPage` (`/clinics/:clinicId`) и `PriceHistoryDialog` (нативный `<dialog>` + SVG-график) (+ тесты)
 - [ ] Task 5: Реализовать `ComparePage` (`/compare`) — матрица сравнения 2–5 клиник с фильтрацией по категории и подсветкой лучшей цены (+ тесты)
 

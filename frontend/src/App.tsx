@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { CompareProvider } from './context/CompareContext';
+import { SearchPage } from './pages/SearchPage';
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -15,7 +16,7 @@ export function App() {
     <CompareProvider>
       <Layout>
         <Routes>
-          <Route path="/" element={<PlaceholderPage title="Поиск медицинских услуг" />} />
+          <Route path="/" element={<SearchPage />} />
           <Route path="/map" element={<PlaceholderPage title="Карта клиник" />} />
           <Route path="/clinics/:clinicId" element={<PlaceholderPage title="Карточка клиники" />} />
           <Route path="/compare" element={<PlaceholderPage title="Сравнение клиник" />} />
