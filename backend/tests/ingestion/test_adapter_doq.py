@@ -83,6 +83,35 @@ async def test_doq_adapter_respects_limit() -> None:
     assert len(records) == 1
 
 
+@respx.mock
+async def test_doq_adapter_distributes_limit_fairly_across_cities() -> None:
+    html = FIXTURE_PATH.read_text(encoding="utf-8")
+    respx.get("https://doq.kz/robots.txt").mock(
+        return_value=httpx.Response(200, text="User-agent: *\nAllow: /\n")
+    )
+    respx.get("https://doq.kz/doctors/almaty/terapevt").mock(
+        return_value=httpx.Response(200, text=html)
+    )
+    respx.get("https://doq.kz/doctors/astana/terapevt").mock(
+        return_value=httpx.Response(200, text=html)
+    )
+
+    async def no_sleep(_: float) -> None:
+        return None
+
+    adapter = DoqAdapter(
+        cities=[("almaty", "Алматы"), ("astana", "Астана")],
+        listing_slugs=[("terapevt", "приём врача")],
+    )
+    records = []
+    async with PoliteHttpClient(min_delay_sec=1.5, max_jitter_sec=0.0, sleep_fn=no_sleep) as client:
+        async for rec in adapter.fetch_records(client, limit=2):
+            records.append(rec)
+
+    assert len(records) == 2
+    assert {r.city_raw for r in records} == {"Алматы", "Астана"}
+
+
 def test_doq_adapter_registered_in_default_registry() -> None:
     adapter = default_registry.get("doq")
     assert adapter.source_id == "doq"

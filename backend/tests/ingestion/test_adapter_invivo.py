@@ -19,6 +19,30 @@ async def test_invivo_adapter_parses_html_fixture_and_skips_invalid_price() -> N
     respx.get("https://invivo.kz/robots.txt").mock(
         return_value=httpx.Response(200, text="User-agent: *\nAllow: /\n")
     )
+    respx.get("https://invivo.kz/ru/sitemap-points.xml").mock(
+        return_value=httpx.Response(
+            200,
+            text=(
+                "<urlset><url><loc>"
+                "https://invivo.kz/ru/almaty/rec-points-map/detail/68/"
+                "</loc></url></urlset>"
+            ),
+        )
+    )
+    respx.get("https://invivo.kz/ru/almaty/rec-points-map/detail/68/").mock(
+        return_value=httpx.Response(
+            200,
+            text=(
+                "<html><head><title>"
+                "Пункт INVIVO: г. Алматы, ул. Майлина, 38а — сдать анализы"
+                "</title></head><body>"
+                '<div data-lat="43,345069" data-long="77,00647" '
+                'data-schedule=\'[{"ScheduleRecord":{"Days":"ПН-ПТ",'
+                '"TimeSampling":"07:30 - 15:30"}}]\'></div>'
+                "</body></html>"
+            ),
+        )
+    )
     respx.get("https://invivo.kz/ru/almaty/analyzes/obshcheklinicheskie-issledovaniia/").mock(
         return_value=httpx.Response(200, text=html)
     )
@@ -40,6 +64,10 @@ async def test_invivo_adapter_parses_html_fixture_and_skips_invalid_price() -> N
     first = records[0]
     assert first.clinic_name_raw == "Лаборатория INVIVO"
     assert first.city_raw == "Алматы"
+    assert first.address_raw == "г. Алматы, ул. Майлина, 38а"
+    assert first.working_hours_raw == "ПН-ПТ 07:30 - 15:30"
+    assert first.latitude == 43.345069
+    assert first.longitude == 77.00647
     assert first.service_name_raw == "Моча. Микроальбумин в суточной моче"
     assert first.price_raw == Decimal("3350")
     assert first.currency_raw == "KZT"
@@ -63,6 +91,30 @@ async def test_invivo_adapter_respects_limit() -> None:
     html = FIXTURE_PATH.read_text(encoding="utf-8")
     respx.get("https://invivo.kz/robots.txt").mock(
         return_value=httpx.Response(200, text="User-agent: *\nAllow: /\n")
+    )
+    respx.get("https://invivo.kz/ru/sitemap-points.xml").mock(
+        return_value=httpx.Response(
+            200,
+            text=(
+                "<urlset><url><loc>"
+                "https://invivo.kz/ru/almaty/rec-points-map/detail/68/"
+                "</loc></url></urlset>"
+            ),
+        )
+    )
+    respx.get("https://invivo.kz/ru/almaty/rec-points-map/detail/68/").mock(
+        return_value=httpx.Response(
+            200,
+            text=(
+                "<html><head><title>"
+                "Пункт INVIVO: г. Алматы, ул. Майлина, 38а — сдать анализы"
+                "</title></head><body>"
+                '<div data-lat="43,345069" data-long="77,00647" '
+                'data-schedule=\'[{"ScheduleRecord":{"Days":"ПН-ПТ",'
+                '"TimeSampling":"07:30 - 15:30"}}]\'></div>'
+                "</body></html>"
+            ),
+        )
     )
     respx.get("https://invivo.kz/ru/almaty/analyzes/obshcheklinicheskie-issledovaniia/").mock(
         return_value=httpx.Response(200, text=html)

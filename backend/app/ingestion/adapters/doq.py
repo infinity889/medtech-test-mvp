@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from collections.abc import AsyncIterator, Sequence
 from decimal import Decimal, InvalidOperation
@@ -130,11 +131,19 @@ class DoqAdapter(BaseSourceAdapter):
         limit: int | None = None,
     ) -> AsyncIterator[RawServiceInput]:
         yielded = 0
+        per_city_limit = (
+            max(1, math.ceil(limit / len(self._city_pairs)))
+            if limit is not None and len(self._city_pairs) > 1
+            else limit
+        )
 
         for city_slug, city_name in self._city_pairs:
+            city_yielded = 0
             for listing_slug, default_category in self._listings:
                 if limit is not None and yielded >= limit:
                     return
+                if per_city_limit is not None and city_yielded >= per_city_limit:
+                    break
 
                 page_url = f"{self.base_url}/doctors/{city_slug}/{listing_slug}"
                 html = await client.get_text(page_url)
@@ -143,6 +152,8 @@ class DoqAdapter(BaseSourceAdapter):
                 for block in offer_blocks:
                     if limit is not None and yielded >= limit:
                         return
+                    if per_city_limit is not None and city_yielded >= per_city_limit:
+                        break
 
                     branches_by_id: dict[int, dict[str, Any]] = {}
                     for branch in block.get("clinic_branches", []):
@@ -154,6 +165,8 @@ class DoqAdapter(BaseSourceAdapter):
                     for svc_entry in block.get("services", []):
                         if limit is not None and yielded >= limit:
                             return
+                        if per_city_limit is not None and city_yielded >= per_city_limit:
+                            break
                         if not isinstance(svc_entry, dict) or not svc_entry.get("is_active", True):
                             continue
 
@@ -217,11 +230,23 @@ class DoqAdapter(BaseSourceAdapter):
                             bool(svc_entry.get("nearest_slot_datetime")) or not offline_only
                         )
 
+                        working_hours_val = (
+                            branch.get("work_hours")
+                            or branch.get("working_hours")
+                            or branch.get("schedule")
+                        )
+                        working_hours = (
+                            str(working_hours_val).strip()
+                            if isinstance(working_hours_val, str) and working_hours_val.strip()
+                            else None
+                        )
+
                         yield RawServiceInput(
                             clinic_name_raw=clinic_name,
                             city_raw=city_name,
                             address_raw=address,
                             phone_raw=phone,
+                            working_hours_raw=working_hours,
                             latitude=lat,
                             longitude=lng,
                             clinic_rating_raw=_normalize_rating(branch.get("feedback_score")),
@@ -243,3 +268,4 @@ class DoqAdapter(BaseSourceAdapter):
                             },
                         )
                         yielded += 1
+                        city_yielded += 1

@@ -31,6 +31,7 @@ async def test_e2e_three_adapters_ingest_and_rerun_has_zero_duplicates() -> None
     respx.get("https://kdlolymp.kz/robots.txt").mock(
         return_value=httpx.Response(200, text="User-agent: *\nAllow: /\n")
     )
+    respx.get("https://kdlolymp.kz/contacts").mock(return_value=httpx.Response(404))
     respx.get("https://kdlolymp.kz/pricelist/almaty").mock(
         return_value=httpx.Response(
             200,
@@ -40,6 +41,7 @@ async def test_e2e_three_adapters_ingest_and_rerun_has_zero_duplicates() -> None
     respx.get("https://invivo.kz/robots.txt").mock(
         return_value=httpx.Response(200, text="User-agent: *\nAllow: /\n")
     )
+    respx.get("https://invivo.kz/ru/sitemap-points.xml").mock(return_value=httpx.Response(404))
     respx.get("https://invivo.kz/ru/almaty/analyzes/obshcheklinicheskie-issledovaniia/").mock(
         return_value=httpx.Response(
             200,

@@ -183,11 +183,15 @@ class PoliteHttpClient:
                     last_status = response.status_code
                     if attempt < self.max_retries:
                         retry_after = response.headers.get("Retry-After")
-                        delay = (
-                            float(retry_after)
-                            if retry_after and retry_after.isdigit()
-                            else self.backoff_base_sec * (2**attempt)
-                        )
+                        if retry_after and retry_after.isdigit():
+                            delay = float(retry_after)
+                        else:
+                            base = (
+                                max(self.backoff_base_sec, 5.0)
+                                if response.status_code == 429
+                                else self.backoff_base_sec
+                            )
+                            delay = base * (2**attempt)
                         await self._sleep(delay)
                         continue
                     raise HttpFetchError(

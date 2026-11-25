@@ -7,7 +7,7 @@ from collections.abc import Iterator, Sequence
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
-from sqlalchemy import delete, desc, select
+from sqlalchemy import Engine, delete, desc, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.core.config import Settings
@@ -34,15 +34,22 @@ class IngestionService:
         session_factory: sessionmaker[Session],
         registry: AdapterRegistry | None = None,
         settings: Settings | None = None,
+        engine: Engine | None = None,
     ) -> None:
         self._session_factory = session_factory
         self._registry = registry or default_registry
         self._settings = settings or Settings()
+        self._engine = engine
         self._runner = IngestionRunner(
             session_factory=self._session_factory,
             registry=self._registry,
             settings=self._settings,
         )
+
+    def close(self) -> None:
+        """Dispose owned SQLAlchemy engine resources if created by factory."""
+        if self._engine is not None:
+            self._engine.dispose()
 
     def list_sources(self, *, only_enabled: bool = False) -> list[SourceInfo]:
         """Return metadata for all registered adapters."""
@@ -156,4 +163,5 @@ def create_default_ingestion_service(settings: Settings | None = None) -> Ingest
         session_factory=session_factory,
         registry=default_registry,
         settings=resolved_settings,
+        engine=engine,
     )

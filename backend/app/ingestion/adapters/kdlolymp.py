@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup, Tag
 from pydantic import HttpUrl, TypeAdapter
 
 from app.ingestion.adapters.base import BaseSourceAdapter
-from app.ingestion.http_client import PoliteHttpClient
+from app.ingestion.http_client import HttpFetchError, PoliteHttpClient, RobotsDisallowedError
 from app.ingestion.schemas import RawServiceInput
 
 _HTTP_URL_ADAPTER = TypeAdapter(HttpUrl)
@@ -76,6 +76,86 @@ def _extract_phone(soup: BeautifulSoup) -> str | None:
     return phone or None
 
 
+def _extract_city_geo_and_phone(
+    payload: list[Any], city_slug: str
+) -> tuple[float | None, float | None, str | None]:
+    """Extract city latitude, longitude, and phone embedded in __NUXT_DATA__."""
+    for idx, entry in enumerate(payload):
+        if not (
+            isinstance(entry, dict)
+            and "latitude" in entry
+            and "longitude" in entry
+            and "slug" in entry
+        ):
+            continue
+        resolved = _resolve_nuxt_index(payload, idx)
+        if not isinstance(resolved, dict) or resolved.get("slug") != city_slug:
+            continue
+        lat_raw = resolved.get("latitude")
+        lng_raw = resolved.get("longitude")
+        lat: float | None = None
+        lng: float | None = None
+        try:
+            if lat_raw is not None and lng_raw is not None:
+                lat = float(str(lat_raw).replace(",", "."))
+                lng = float(str(lng_raw).replace(",", "."))
+        except ValueError:
+            lat, lng = None, None
+
+        city_phone: str | None = None
+        phones = resolved.get("phones")
+        if isinstance(phones, list):
+            for item in phones:
+                if isinstance(item, dict) and item.get("phone_number"):
+                    city_phone = str(item["phone_number"]).strip()
+                    break
+        return lat, lng, city_phone
+    return None, None, None
+
+
+def _extract_working_hours_from_contacts_html(html: str) -> str | None:
+    """Extract call-center/lab working schedule from kdlolymp.kz/contacts __NUXT_DATA__."""
+    soup = BeautifulSoup(html, "lxml")
+    script = soup.find("script", id="__NUXT_DATA__")
+    if not isinstance(script, Tag) or not script.string:
+        return None
+    try:
+        payload = json.loads(script.string)
+    except json.JSONDecodeError:
+        return None
+    if not isinstance(payload, list):
+        return None
+
+    parts: list[str] = []
+    for entry in payload:
+        if not (isinstance(entry, dict) and any("shedule" in str(k) for k in entry)):
+            continue
+        for key, ref in entry.items():
+            if "shedule" not in str(key) or not isinstance(ref, int):
+                continue
+            resolved = _resolve_nuxt_index(payload, ref)
+            if not isinstance(resolved, dict):
+                continue
+            body = resolved.get("body")
+            items = body.get("data") if isinstance(body, dict) else None
+            if not isinstance(items, list):
+                continue
+            for sched in items:
+                if not isinstance(sched, dict) or not sched.get("is_active", 1):
+                    continue
+                tr = sched.get("translation")
+                if not isinstance(tr, dict):
+                    continue
+                begin_d = str(tr.get("begin_date") or "").strip()
+                end_d = str(tr.get("end_date") or "").strip()
+                begin_t = str(tr.get("begin_time") or "").strip()
+                end_t = str(tr.get("end_time") or "").strip()
+                if begin_d and begin_t and end_t:
+                    days = f"{begin_d}–{end_d}" if end_d and end_d != begin_d else begin_d
+                    parts.append(f"{days} {begin_t}–{end_t}")
+    return "; ".join(parts) if parts else None
+
+
 class KdlOlympAdapter(BaseSourceAdapter):
     """Extracts public laboratory test prices from kdlolymp.kz city pricelist pages."""
 
@@ -88,12 +168,25 @@ class KdlOlympAdapter(BaseSourceAdapter):
         self._city_pairs = tuple(cities) if cities is not None else DEFAULT_KDLOLYMP_CITIES
         self.cities = tuple(city_name for _, city_name in self._city_pairs)
 
+    async def _fetch_working_hours(self, client: PoliteHttpClient) -> str | None:
+        try:
+            contacts_html = await client.get_text(f"{self.base_url}/contacts")
+        except (HttpFetchError, RobotsDisallowedError):
+            return None
+        return _extract_working_hours_from_contacts_html(contacts_html)
+
     async def fetch_records(
         self,
         client: PoliteHttpClient,
         limit: int | None = None,
     ) -> AsyncIterator[RawServiceInput]:
         yielded = 0
+        per_city_limit = (
+            max(1, math.ceil(limit / len(self._city_pairs)))
+            if limit is not None and len(self._city_pairs) > 1
+            else limit
+        )
+        working_hours = await self._fetch_working_hours(client)
 
         for city_slug, city_name in self._city_pairs:
             if limit is not None and yielded >= limit:
@@ -102,7 +195,7 @@ class KdlOlympAdapter(BaseSourceAdapter):
             page_url = f"{self.base_url}/pricelist/{city_slug}"
             html = await client.get_text(page_url)
             soup = BeautifulSoup(html, "lxml")
-            phone = _extract_phone(soup)
+            page_phone = _extract_phone(soup)
 
             script = soup.find("script", id="__NUXT_DATA__")
             if not isinstance(script, Tag) or not script.string:
@@ -112,10 +205,16 @@ class KdlOlympAdapter(BaseSourceAdapter):
             if not isinstance(payload, list):
                 continue
 
+            lat, lng, city_phone = _extract_city_geo_and_phone(payload, city_slug)
+            phone = city_phone or page_phone
+
             seen_codes: set[str] = set()
+            city_yielded = 0
             for idx, entry in enumerate(payload):
                 if limit is not None and yielded >= limit:
                     return
+                if per_city_limit is not None and city_yielded >= per_city_limit:
+                    break
                 if not (
                     isinstance(entry, dict)
                     and "translation" in entry
@@ -158,7 +257,11 @@ class KdlOlympAdapter(BaseSourceAdapter):
                 yield RawServiceInput(
                     clinic_name_raw="КДЛ Олимп",
                     city_raw=city_name,
+                    address_raw=f"г. {city_name}, сеть пунктов КДЛ Олимп",
                     phone_raw=phone,
+                    working_hours_raw=working_hours,
+                    latitude=lat,
+                    longitude=lng,
                     has_online_booking=True,
                     service_name_raw=title,
                     category_hint="лаборатория",
@@ -178,3 +281,4 @@ class KdlOlympAdapter(BaseSourceAdapter):
                     },
                 )
                 yielded += 1
+                city_yielded += 1

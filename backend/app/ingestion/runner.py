@@ -113,39 +113,53 @@ class IngestionRunner:
         records_updated = 0
         errors_count = 0
         seen_fingerprints: set[str] = set()
+        pending_in_batch = 0
+        batch_commit_size = 50
 
-        try:
-            async for item in adapter.fetch_records(client, limit=limit):
-                records_fetched += 1
-                try:
-                    validated = (
-                        item
-                        if isinstance(item, RawServiceInput)
-                        else RawServiceInput.model_validate(item)
+        with self._session_factory() as batch_session:
+            try:
+                async for item in adapter.fetch_records(client, limit=limit):
+                    records_fetched += 1
+                    try:
+                        validated = (
+                            item
+                            if isinstance(item, RawServiceInput)
+                            else RawServiceInput.model_validate(item)
+                        )
+                    except ValidationError as exc:
+                        errors_count += 1
+                        self._record_error(run_id, adapter.source_id, exc)
+                        continue
+
+                    fingerprint = compute_record_fingerprint(adapter.source_id, validated)
+                    if fingerprint in seen_fingerprints:
+                        continue
+                    seen_fingerprints.add(fingerprint)
+
+                    was_inserted = self._upsert_raw_record(
+                        session=batch_session,
+                        run_id=run_id,
+                        source_id=adapter.source_id,
+                        fingerprint=fingerprint,
+                        item=validated,
                     )
-                except ValidationError as exc:
-                    errors_count += 1
-                    self._record_error(run_id, adapter.source_id, exc)
-                    continue
+                    if was_inserted:
+                        records_inserted += 1
+                    else:
+                        records_updated += 1
 
-                fingerprint = compute_record_fingerprint(adapter.source_id, validated)
-                if fingerprint in seen_fingerprints:
-                    continue
-                seen_fingerprints.add(fingerprint)
+                    pending_in_batch += 1
+                    if pending_in_batch >= batch_commit_size:
+                        batch_session.commit()
+                        pending_in_batch = 0
 
-                was_inserted = self._upsert_raw_record(
-                    run_id=run_id,
-                    source_id=adapter.source_id,
-                    fingerprint=fingerprint,
-                    item=validated,
-                )
-                if was_inserted:
-                    records_inserted += 1
-                else:
-                    records_updated += 1
-        except Exception as exc:  # noqa: BLE001 — isolate any adapter crash
-            errors_count += 1
-            self._record_error(run_id, adapter.source_id, exc)
+                if pending_in_batch > 0:
+                    batch_session.commit()
+            except Exception as exc:  # noqa: BLE001 — isolate any adapter crash
+                if pending_in_batch > 0:
+                    batch_session.commit()
+                errors_count += 1
+                self._record_error(run_id, adapter.source_id, exc)
 
         finished_at = datetime.now(UTC)
         processed_count = records_inserted + records_updated
@@ -172,6 +186,7 @@ class IngestionRunner:
     def _upsert_raw_record(
         self,
         *,
+        session: Session,
         run_id: uuid.UUID,
         source_id: str,
         fingerprint: str,
@@ -230,10 +245,7 @@ class IngestionRunner:
             },
         ).returning(literal_column("(xmax = 0)").label("inserted"))
 
-        with self._session_factory() as session:
-            inserted = bool(session.execute(upsert_stmt).scalar_one())
-            session.commit()
-            return inserted
+        return bool(session.execute(upsert_stmt).scalar_one())
 
     def _record_error(self, run_id: uuid.UUID, source_id: str, exc: Exception) -> None:
         error_type, url, details = _classify_error(exc)
