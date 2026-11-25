@@ -9,14 +9,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](.
 **Description:** Добавить зависимость `rapidfuzz>=3.10,<4.0` в `backend/pyproject.toml`, расширить `Settings` параметрами нормализации (`usd_to_kzt_rate=Decimal("495.00")`, `fuzzy_match_threshold=86.0`, `fuzzy_suggestion_threshold=60.0`, `offer_max_age_days=30`), добавить команды `seed-catalog`, `normalize`, `test-normalization` в `Makefile` и пересобрать контейнер `medprice-backend:dev`.
 
 **Acceptance criteria:**
-- [ ] `rapidfuzz` импортируется внутри контейнера `medprice-backend:dev`.
-- [ ] `Settings` считывает и валидирует `USD_TO_KZT_RATE` (> 0, `Decimal`), `FUZZY_MATCH_THRESHOLD` (0..100), `FUZZY_SUGGESTION_THRESHOLD` (0..100, ≤ match threshold), `OFFER_MAX_AGE_DAYS` (≥ 1).
-- [ ] `Makefile` содержит цели `seed-catalog`, `normalize`, `test-normalization`, `test-all`.
+- [x] `rapidfuzz` импортируется внутри контейнера `medprice-backend:dev`.
+- [x] `Settings` считывает и валидирует `USD_TO_KZT_RATE` (> 0, `Decimal`), `FUZZY_MATCH_THRESHOLD` (0..100), `FUZZY_SUGGESTION_THRESHOLD` (0..100, ≤ match threshold), `OFFER_MAX_AGE_DAYS` (≥ 1).
+- [x] `Makefile` содержит цели `seed-catalog`, `normalize`, `test-normalization`, `test-all`.
 
 **Verification:**
-- [ ] Build succeeds: `make backend-build`
-- [ ] Tests pass: `make test-ingestion && make lint && make typecheck`
-- [ ] Manual check: `podman run --rm medprice-backend:dev python -c "import rapidfuzz; print(rapidfuzz.__version__)"`
+- [x] Build succeeds: `make backend-build`
+- [x] Tests pass: `make test-ingestion && make lint && make typecheck`
+- [x] Manual check: `podman run --rm medprice-backend:dev python -c "import rapidfuzz; print(rapidfuzz.__version__)"`
 
 **Dependencies:** None
 

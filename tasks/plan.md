@@ -38,7 +38,7 @@ Task 1 (rapidfuzz in Containerfile/pyproject + Settings + Makefile)
 Подробные карточки задач (описание, критерии приёмки, команды проверки, файлы, размер) находятся в [tasks/todo.md](./todo.md).
 
 ### Phase 1: Foundation
-- [ ] Task 1: Добавить `rapidfuzz`, настройки нормализации в `Settings`, цели в `Makefile` и пересобрать контейнер
+- [x] Task 1: Добавить `rapidfuzz`, настройки нормализации в `Settings`, цели в `Makefile` и пересобрать контейнер
 - [ ] Task 2: Реализовать ORM-модели слоя `normalization` и обратимую миграцию Alembic `0002`
 
 ### Checkpoint 1: Foundation

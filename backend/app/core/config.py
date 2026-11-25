@@ -1,8 +1,9 @@
 """Application settings loaded from environment variables."""
 
+from decimal import Decimal
 from functools import lru_cache
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -50,6 +51,36 @@ class Settings(BaseSettings):
         alias="RAW_RETENTION_DAYS",
         ge=90,
     )
+    usd_to_kzt_rate: Decimal = Field(
+        default=Decimal("495.00"),
+        alias="USD_TO_KZT_RATE",
+        gt=0,
+    )
+    fuzzy_match_threshold: float = Field(
+        default=86.0,
+        alias="FUZZY_MATCH_THRESHOLD",
+        ge=0.0,
+        le=100.0,
+    )
+    fuzzy_suggestion_threshold: float = Field(
+        default=60.0,
+        alias="FUZZY_SUGGESTION_THRESHOLD",
+        ge=0.0,
+        le=100.0,
+    )
+    offer_max_age_days: int = Field(
+        default=30,
+        alias="OFFER_MAX_AGE_DAYS",
+        ge=1,
+    )
+
+    @model_validator(mode="after")
+    def _validate_fuzzy_thresholds(self) -> "Settings":
+        if self.fuzzy_suggestion_threshold > self.fuzzy_match_threshold:
+            raise ValueError(
+                "fuzzy_suggestion_threshold must be <= fuzzy_match_threshold"
+            )
+        return self
 
 
 @lru_cache(maxsize=1)

@@ -1,5 +1,5 @@
 SHELL := /usr/bin/env bash
-.PHONY: net-up db-up db-down backend-build migrate test-ingestion lint typecheck ingest
+.PHONY: net-up db-up db-down backend-build migrate test-ingestion test-normalization test-all lint typecheck ingest seed-catalog normalize
 
 NETWORK := medprice-net
 PG_CONTAINER := medprice-pg
@@ -15,6 +15,7 @@ DATABASE_URL := postgresql+psycopg://$(PG_USER):$(PG_PASSWORD)@$(PG_CONTAINER):5
 TEST_DATABASE_URL := postgresql+psycopg://$(PG_USER):$(PG_PASSWORD)@$(PG_CONTAINER):5432/$(PG_TEST_DB)
 
 PYTEST_ARGS ?= tests/ingestion
+NORM_PYTEST_ARGS ?= tests/normalization
 SOURCE ?= all
 EXTRA_ARGS ?=
 
@@ -58,6 +59,16 @@ test-ingestion: db-up
 		-e DATABASE_URL=$(TEST_DATABASE_URL) \
 		$(BACKEND_IMAGE) sh -c "alembic upgrade head && pytest $(PYTEST_ARGS) --cov=app.ingestion --cov-report=term-missing"
 
+test-normalization: db-up
+	podman run --rm --network $(NETWORK) -v $(CURDIR)/backend:/app:Z \
+		-e DATABASE_URL=$(TEST_DATABASE_URL) \
+		$(BACKEND_IMAGE) sh -c "alembic upgrade head && pytest $(NORM_PYTEST_ARGS) --cov=app.normalization --cov-report=term-missing"
+
+test-all: db-up
+	podman run --rm --network $(NETWORK) -v $(CURDIR)/backend:/app:Z \
+		-e DATABASE_URL=$(TEST_DATABASE_URL) \
+		$(BACKEND_IMAGE) sh -c "alembic upgrade head && pytest tests --cov=app --cov-report=term-missing"
+
 lint:
 	podman run --rm -v $(CURDIR)/backend:/app:Z \
 		$(BACKEND_IMAGE) ruff check app tests
@@ -70,3 +81,13 @@ ingest: db-up
 	podman run --rm --network $(NETWORK) -v $(CURDIR)/backend:/app:Z \
 		-e DATABASE_URL=$(DATABASE_URL) \
 		$(BACKEND_IMAGE) python -m app.ingestion.cli run --source $(SOURCE) $(EXTRA_ARGS)
+
+seed-catalog: db-up
+	podman run --rm --network $(NETWORK) -v $(CURDIR)/backend:/app:Z \
+		-e DATABASE_URL=$(DATABASE_URL) \
+		$(BACKEND_IMAGE) python -m app.normalization.cli seed-catalog
+
+normalize: db-up
+	podman run --rm --network $(NETWORK) -v $(CURDIR)/backend:/app:Z \
+		-e DATABASE_URL=$(DATABASE_URL) \
+		$(BACKEND_IMAGE) python -m app.normalization.cli run $(EXTRA_ARGS)
