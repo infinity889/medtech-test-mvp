@@ -68,15 +68,15 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-search-api.md](../S
 **Description:** Реализовать сервисный слой чтения `SearchQueryService` (агрегаты фильтров, ранжированное автодополнение по справочнику и синонимам, поиск и сравнение предложений с фильтрами города/категории/цены/рейтинга/онлайн-записи, расчётом расстояния Haversine, сортировкой `price_asc|price_desc|distance_asc|updated_desc|rating_desc`, ссылками 2GIS/Google Maps и жёстким правилом свежести ≤ 30 дней) и подключить маршруты.
 
 **Acceptance criteria:**
-- [ ] `GET /api/v1/meta/filters` возвращает города, категории с русскими названиями, мин/макс цены и дату последнего обновления.
-- [ ] `GET /api/v1/services/autocomplete?q=ОАК` и `?q=CBC` возвращают «Общий анализ крови (ОАК)» с `offers_count` и `min_price_kzt`.
-- [ ] `GET /api/v1/offers` поддерживает все фильтры, сортировки (включая `distance_asc` по `lat`/`lng`), пагинацию, агрегаты `summary` и **никогда** не возвращает предложения старше 30 дней.
-- [ ] Некорректные диапазоны (`min_price > max_price` или `lat` без `lng`) возвращают `422 VALIDATION_ERROR`.
+- [x] `GET /api/v1/meta/filters` возвращает города, категории с русскими названиями, мин/макс цены и дату последнего обновления.
+- [x] `GET /api/v1/services/autocomplete?q=ОАК` и `?q=CBC` возвращают «Общий анализ крови (ОАК)» с `offers_count` и `min_price_kzt`.
+- [x] `GET /api/v1/offers` поддерживает все фильтры, сортировки (включая `distance_asc` по `lat`/`lng`), пагинацию, агрегаты `summary` и **никогда** не возвращает предложения старше 30 дней.
+- [x] Некорректные диапазоны (`min_price > max_price` или `lat` без `lng`) возвращают `422 VALIDATION_ERROR`.
 
 **Verification:**
-- [ ] Tests pass: `make test-api API_PYTEST_ARGS="tests/api/test_search_and_offers.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: убедиться, что `distance_km` корректен по формуле Haversine
+- [x] Tests pass: `make test-api API_PYTEST_ARGS="tests/api/test_search_and_offers.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: убедиться, что `distance_km` корректен по формуле Haversine
 
 **Dependencies:** Task 2
 

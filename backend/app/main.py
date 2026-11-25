@@ -12,7 +12,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import Engine
 
 from app.api.errors import register_error_handlers
+from app.api.query_service import SearchQueryService
 from app.api.routes import health as health_routes
+from app.api.routes import offers as offers_routes
+from app.api.routes import services as services_routes
 from app.core.config import Settings
 from app.core.db import create_db_engine, create_session_factory
 from app.ingestion.adapters.registry import default_registry
@@ -45,6 +48,10 @@ def create_app(
         ingestion_service=ingestion_service,
         settings=resolved_settings,
     )
+    query_service = SearchQueryService(
+        session_factory=session_factory,
+        settings=resolved_settings,
+    )
 
     if resolved_settings.admin_api_token == "dev-admin-token":
         logger.warning(
@@ -75,6 +82,7 @@ def create_app(
     application.state.session_factory = session_factory
     application.state.ingestion_service = ingestion_service
     application.state.normalization_service = normalization_service
+    application.state.query_service = query_service
     application.state.scrape_lock = asyncio.Lock()
 
     application.add_middleware(
@@ -89,6 +97,8 @@ def create_app(
 
     api_v1 = APIRouter(prefix="/api/v1")
     api_v1.include_router(health_routes.router)
+    api_v1.include_router(services_routes.router)
+    api_v1.include_router(offers_routes.router)
     application.include_router(api_v1)
 
     return application

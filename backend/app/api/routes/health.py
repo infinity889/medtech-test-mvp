@@ -9,9 +9,10 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session, sessionmaker
 
-from app.api.deps import get_session_factory
+from app.api.deps import get_query_service, get_session_factory
 from app.api.errors import APIError
-from app.api.schemas import HealthResponse
+from app.api.query_service import SearchQueryService
+from app.api.schemas import FiltersMetaResponse, HealthResponse
 
 router = APIRouter(tags=["health"])
 
@@ -31,3 +32,11 @@ def health_check(
             message="Database connection unavailable",
         ) from exc
     return HealthResponse(status="ok", database="ok")
+
+
+@router.get("/meta/filters", response_model=FiltersMetaResponse)
+def get_filters_meta(
+    query_service: Annotated[SearchQueryService, Depends(get_query_service)],
+) -> FiltersMetaResponse:
+    """Return cities, localized categories, price bounds, and freshness timestamp for UI filters."""
+    return query_service.get_filters_meta()

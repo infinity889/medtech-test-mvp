@@ -42,7 +42,7 @@ Task 1 (fastapi + uvicorn in pyproject/container, API Settings, Makefile targets
 - [x] Контейнер пересобран с FastAPI/uvicorn, `/api/v1/health` и OpenAPI `/docs` работают, единый формат ошибок протестирован
 
 ### Phase 2: Patient Search, Clinics, Compare & Price History
-- [ ] Task 3: Реализовать `query_service.py` и маршруты `/meta/filters`, `/services/autocomplete`, `/offers` (все фильтры, сортировки, Haversine, свежесть ≤ 30 дней)
+- [x] Task 3: Реализовать `query_service.py` и маршруты `/meta/filters`, `/services/autocomplete`, `/offers` (все фильтры, сортировки, Haversine, свежесть ≤ 30 дней)
 - [ ] Task 4: Реализовать маршруты `/clinics`, `/clinics/{clinic_id}`, `/compare` (2–5 клиник) и `/services/{service_id}/price-history`
 
 ### Checkpoint 2: Public API

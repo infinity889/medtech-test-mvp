@@ -10,6 +10,7 @@ from fastapi import Depends, Header, Request, status
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.api.errors import APIError
+from app.api.query_service import SearchQueryService
 from app.core.config import Settings
 from app.ingestion.service import IngestionService
 from app.normalization.service import NormalizationService
@@ -23,6 +24,11 @@ def get_app_settings(request: Request) -> Settings:
 def get_session_factory(request: Request) -> sessionmaker[Session]:
     """Return SQLAlchemy session factory attached to FastAPI app state."""
     return cast(sessionmaker[Session], request.app.state.session_factory)
+
+
+def get_query_service(request: Request) -> SearchQueryService:
+    """Return SearchQueryService attached to FastAPI app state."""
+    return cast(SearchQueryService, request.app.state.query_service)
 
 
 def get_ingestion_service(request: Request) -> IngestionService:
