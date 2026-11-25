@@ -1,65 +1,69 @@
-# Implementation Plan: Search & Comparison API (`search-api`) — V1
+# Implementation Plan: Web UI (`web-ui`) — V1
 
-Source spec: [SPEC-search-api.md](../SPEC-search-api.md)
+Source spec: [SPEC-web-ui.md](../SPEC-web-ui.md)
 
 ## Overview
 
-Реализуем модуль `search-api` — быстрый, строго типизированный FastAPI REST API (`/api/v1`) для пациентского поиска и сравнения цен на медицинские услуги в Казахстане (автодополнение, фильтры, сортировка по цене/расстоянию/свежести/рейтингу, правило актуальности ≤ 30 дней, карточка клиники, карта клиник, матрица сравнения 2–5 клиник, история цен) и защищённые `X-Admin-Token` админ-эндпоинты для ручного запуска парсинга и разбора `unmatched queue`.
+Реализуем адаптивный веб-интерфейс MedServicePrice.kz на **React 19 + TypeScript (strict) + Vite 6 + Tailwind CSS v4 + Leaflet (OpenStreetMap)** в контейнере Node 22 (`podman`), потребляющий REST API модуля `search-api` (`/api/v1/*`) без хардкодных данных.
 
 ## Architecture Decisions
 
-1. **Нулевые новые миграции БД**: `search-api` целиком работает поверх таблиц и сервисных контрактов модулей `normalization` и `ingestion`; все мутации (`trigger_run`, `run_normalization`, `resolve_unmatched`, `ignore_unmatched`) проходят исключительно через `IngestionService` и `NormalizationService`.
-2. **Двойная гарантия свежести ≤ 30 дней**: публичные запросы `/offers`, `/clinics/{id}`, `/compare` и агрегаты `/meta/filters`, `/services/autocomplete` всегда фильтруют `is_active = true AND parsed_at >= now() - interval '30 days'`, не полагаясь только на периодический джоб `refresh_stale_offers`.
-3. **Единый формат ошибок и пагинации**: кастомные обработчики исключений (`APIError`, `RequestValidationError`, `HTTPException`, `Exception`) гарантируют одинаковую JSON-структуру `{"error": {"code", "message", "details"}}` без утечки внутренних стектрейсов.
-4. **Haversine + маршруты 2GIS / Google Maps**: расстояние до клиники вычисляется по координатам `(lat, lng)` (клиники без GPS помещаются в конец при `sort_by=distance_asc`); для каждой клиники генерируются прямые ссылки маршрута в 2GIS и Google Maps.
-5. **Защита от параллельных запусков парсинга**: `POST /api/v1/admin/scrape-runs` защищён `asyncio.Lock` — конкурентный запрос получает `409 SCRAPE_IN_PROGRESS`.
+1. **Контейнеризированный Node 22 (`medprice-web:dev`)**: весь toolchain (`vite`, `vitest`, `tsc`, `eslint`) запускается в `podman` на базе `docker.io/library/node:22-alpine` в сети `medprice-net`, проксируя `/api` на `http://medprice-api:8000` (обход проблем CORS и отсутствие зависимости от Node на хосте).
+2. **Tailwind CSS v4 + семантические клинические токены (`@theme`)**: палитра `#0F766E` (клинический бирюзовый), `#047857` (лучшая цена), `#F8FAFC` (фон), `#0F172A` (текст), `tabular-nums` для цен и расстояний — чистая типографика и высокая читаемость без AI-градиентов.
+3. **URL-driven состояние поиска**: все фильтры, запрос, выбранная услуга, сортировка, геолокация и страница хранятся в `URLSearchParams` (`useSearchParams`), обеспечивая шаринг ссылок и работу кнопки «Назад».
+4. **Контекст сравнения клиник (`CompareContext`)**: 2–5 клиник хранятся в `localStorage` и синхронизируются с `?clinic_ids=...` на `/compare`; липкий `CompareDock` доступен на всех пациентских страницах.
+5. **Современные веб-примитивы и доступность (WCAG 2.1 AA)**: WAI-ARIA combobox для автодополнения, нативный `<dialog>` (`showModal()`) для графика истории цен, семантические кнопки/ссылки, явные бейджи и иконки (не только цвет), skeleton/empty/error состояния.
+6. **Безопасность админки**: `X-Admin-Token` вводится пользователем на `/admin` и хранится только в `sessionStorage`, никогда не попадая в бандл или URL.
 
 ## Dependency Graph
 
 ```text
-Task 1 (fastapi + uvicorn in pyproject/container, API Settings, Makefile targets)
+Task 1 (frontend/ scaffold: Node 22 Containerfile, React 19 + Vite 6 + Tailwind v4 + Leaflet + Vitest + ESLint, Makefile targets)
    │
-   └── Task 2 (API schemas, unified APIError handlers, DI deps + X-Admin-Token, FastAPI app shell + /health)
+   └── Task 2 (API client + strict TS types + format utils + CompareContext + Layout/Header/CompareDock + unit tests)
           │
-          ├── Task 3 (SearchQueryService: /meta/filters, /services/autocomplete, /offers with filters/Haversine/30d freshness)
+          ├── Task 3 (SearchPage '/': WAI-ARIA SearchBar autocomplete, FiltersPanel + geolocation, OfferCard + sorting/pagination + tests)
           │
-          ├── Task 4 (Clinics, Clinic Detail, 2GIS/Google Maps links, /compare 2–5 clinics matrix, /price-history)
+          ├── Task 4 (MapPage '/map' with reusable Leaflet ClinicMap + ClinicDetailPage '/clinics/:id' with 2GIS/Google Maps + PriceHistoryDialog SVG chart)
           │
-          └── Task 5 (Admin routes: sources, runs, errors, stats, unmatched resolve/ignore, POST scrape-runs + 409 lock)
+          ├── Task 5 (ComparePage '/compare' 2–5 clinics matrix with cheapest highlight + tests)
+          │
+          └── Task 6 (AdminPage '/admin': X-Admin-Token login, stats, sources, manual scrape + 409 handling, unmatched resolve/ignore + tests)
                  │
-                 └── Task 6 (Live API smoke test on medprice via podman, latency < 500ms check, README update)
+                 └── Task 7 (Live end-to-end verification against medprice-api in browser: 375px & 1440px, console=0 errors, README update)
 ```
 
 ## Task List
 
 Подробные карточки задач находятся в [tasks/todo.md](./todo.md).
 
-### Phase 1: Foundation & App Shell
-- [x] Task 1: Добавить `fastapi` и `uvicorn[standard]`, настройки API в `Settings`, цели `api-up`/`api-down`/`test-api` в `Makefile` и пересобрать контейнер
-- [x] Task 2: Реализовать `schemas.py`, `errors.py`, `deps.py`, `main.py` и `routes/health.py` (`/health`, CORS, `APIError`, `X-Admin-Token`)
+### Phase 1: Runtime & Core Foundation
+- [ ] Task 1: Создать `frontend/` (Node 22 `Containerfile`, `package.json`, `vite.config.ts`, `tsconfig.json`, `eslint.config.js`, Tailwind v4 `app.css`), добавить цели `web-*` в `Makefile` и собрать образ `medprice-web:dev`
+- [ ] Task 2: Реализовать `api/types.ts`, `api/client.ts`, `utils/format.ts`, `CompareContext`, `StateViews`, `Layout` и `CompareDock` (+ unit-тесты)
 
-### Checkpoint 1: Foundation
-- [x] Контейнер пересобран с FastAPI/uvicorn, `/api/v1/health` и OpenAPI `/docs` работают, единый формат ошибок протестирован
+### Checkpoint 1: Frontend Foundation
+- [ ] Образ `medprice-web:dev` собран, `make test-web`, `make lint-web`, `make typecheck-web`, `make build-web` зелёные
 
-### Phase 2: Patient Search, Clinics, Compare & Price History
-- [x] Task 3: Реализовать `query_service.py` и маршруты `/meta/filters`, `/services/autocomplete`, `/offers` (все фильтры, сортировки, Haversine, свежесть ≤ 30 дней)
-- [x] Task 4: Реализовать маршруты `/clinics`, `/clinics/{clinic_id}`, `/compare` (2–5 клиник) и `/services/{service_id}/price-history`
+### Phase 2: Patient Experience (Search, Map, Clinic Detail, Price History & Compare)
+- [ ] Task 3: Реализовать `SearchPage` (`/`) — WAI-ARIA `SearchBar` с автодополнением, `FiltersPanel` с геолокацией и URL-синхронизацией, `OfferCard`, сводку цен, сортировку и пагинацию (+ тесты)
+- [ ] Task 4: Реализовать переиспользуемый `ClinicMap` (Leaflet + OpenStreetMap), `MapPage` (`/map`), `ClinicDetailPage` (`/clinics/:clinicId`) и `PriceHistoryDialog` (нативный `<dialog>` + SVG-график) (+ тесты)
+- [ ] Task 5: Реализовать `ComparePage` (`/compare`) — матрица сравнения 2–5 клиник с фильтрацией по категории и подсветкой лучшей цены (+ тесты)
 
-### Checkpoint 2: Public API
-- [x] Все пациентские эндпоинты протестированы против PostgreSQL (`medprice_test`), включая правило 30 дней, Haversine и сравнение 2–5 клиник
+### Checkpoint 2: Patient Flows Complete
+- [ ] Все пациентские экраны (`/`, `/map`, `/clinics/:id`, `/compare`, график истории цен) реализованы и покрыты тестами Vitest
 
-### Phase 3: Admin API & Live Verification
-- [x] Task 5: Реализовать защищённые `X-Admin-Token` маршруты `/api/v1/admin/*` (sources, runs, errors, stats, unmatched resolve/ignore, scrape-runs с `409` lock)
-- [x] Task 6: Провести живой прогон контейнера API (`make api-up`) на 499 реальных предложениях `medprice`, замерить задержки `< 500 мс`, проверить покрытие ≥ 85% и обновить `README.md`
+### Phase 3: Admin UI & Live Browser Verification
+- [ ] Task 6: Реализовать `AdminPage` (`/admin`) — форма токена (`sessionStorage`), статистика, источники, ручной запуск парсинга с обработкой `409`, история запусков/ошибок и 1-клик разметка/игнорирование `unmatched` (+ тесты)
+- [ ] Task 7: Поднять `make api-up` + `make web-up` на живых данных `medprice`, провести проверку в реальном браузере (десктоп `1440px` и мобильный `375px`, 0 ошибок в консоли), обновить `README.md`
 
-### Checkpoint 3: Module Complete
-- [x] Все 6 критериев успеха из `SPEC-search-api.md` выполнены, `make test-all`, `make lint`, `make typecheck` чистые
-- [ ] Ревью с человеком перед переходом к `SPEC-web-ui.md`
+### Checkpoint 3: Module Complete (MVP Ready)
+- [ ] Все 5 критериев успеха из `SPEC-web-ui.md` выполнены; `make test-all`, `make test-web`, `make lint-web`, `make typecheck-web`, `make build-web` зелёные
+- [ ] Финальное ревью пользователя
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Длительный синхронный парсинг в `POST /admin/scrape-runs` может заблокировать event loop или быть запущен дважды | Medium | `asyncio.Lock` с немедленным `409 SCRAPE_IN_PROGRESS` при повторном вызове + асинхронный `IngestionService.trigger_run` + опциональный `limit` |
-| Утечка просроченных цен (> 30 дней), если забыть фильтр `parsed_at >= cutoff` в одном из запросов | High | Выносим единый helper `_freshness_cutoff()` в `SearchQueryService` и проверяем отдельным тестом на `/offers` и `/clinics/{id}` |
-| Проблемы CORS при подключении React/Vite (`localhost:5173`) в модуле `web-ui` | Low | Явный `CORSMiddleware` из `Settings.cors_origins` + тест на preflight `OPTIONS` |
+| Иконки маркеров Leaflet по умолчанию ломаются при сборке Vite | Medium | Используем аккуратные кастомные `L.divIcon` в стиле клинической палитры (не зависят от относительных PNG-путей Leaflet и выглядят заметно чище) |
+| Стили Tailwind Preflight конфликтуют с контейнером карты Leaflet | Medium | Явно сохраняем `max-width: none` для `.leaflet-pane img` в `src/styles/app.css` |
+| Блокировка геолокации в браузере пользователя | Low | Явное дружелюбное сообщение при `PERMISSION_DENIED` без поломки остальных фильтров и сортировок |
