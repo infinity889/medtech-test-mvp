@@ -187,7 +187,10 @@ class NormalizationService:
         stmt = (
             select(UnmatchedService)
             .where(UnmatchedService.status == status)
-            .order_by(desc(UnmatchedService.suggested_score), desc(UnmatchedService.created_at))
+            .order_by(
+                desc(UnmatchedService.suggested_score).nulls_last(),
+                desc(UnmatchedService.created_at),
+            )
             .offset(offset)
             .limit(limit)
         )

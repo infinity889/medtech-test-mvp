@@ -50,10 +50,10 @@ Task 1 (fastapi + uvicorn in pyproject/container, API Settings, Makefile targets
 
 ### Phase 3: Admin API & Live Verification
 - [x] Task 5: Реализовать защищённые `X-Admin-Token` маршруты `/api/v1/admin/*` (sources, runs, errors, stats, unmatched resolve/ignore, scrape-runs с `409` lock)
-- [ ] Task 6: Провести живой прогон контейнера API (`make api-up`) на 499 реальных предложениях `medprice`, замерить задержки `< 500 мс`, проверить покрытие ≥ 85% и обновить `README.md`
+- [x] Task 6: Провести живой прогон контейнера API (`make api-up`) на 499 реальных предложениях `medprice`, замерить задержки `< 500 мс`, проверить покрытие ≥ 85% и обновить `README.md`
 
 ### Checkpoint 3: Module Complete
-- [ ] Все 6 критериев успеха из `SPEC-search-api.md` выполнены, `make test-all`, `make lint`, `make typecheck` чистые
+- [x] Все 6 критериев успеха из `SPEC-search-api.md` выполнены, `make test-all`, `make lint`, `make typecheck` чистые
 - [ ] Ревью с человеком перед переходом к `SPEC-web-ui.md`
 
 ## Risks and Mitigations

@@ -156,14 +156,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-search-api.md](../S
 **Description:** Поднять FastAPI-контейнер `medprice-api` на порту `8000` поверх реальной БД `medprice` (64 клиники, 499 предложений, 88 услуг), проверить реальные запросы `/health`, `/meta/filters`, `/services/autocomplete?q=ОАК`, `/offers?q=ОАК`, `/clinics`, `/compare`, `/docs`, замерить время ответа (`< 500 мс`), подтвердить покрытие ≥ 85% по `app/api` и обновить `README.md`.
 
 **Acceptance criteria:**
-- [ ] `make api-up` поднимает API в сети `medprice-net` на `http://127.0.0.1:8000`.
-- [ ] Живые запросы к `/api/v1/services/autocomplete?q=ОАК` и `/api/v1/offers?q=ОАК` возвращают реальные предложения `kdlolymp` + `invivo` за `< 500 мс`.
-- [ ] `make test-all` (покрытие `app/api` ≥ 85%), `make lint`, `make typecheck` проходят без ошибок.
+- [x] `make api-up` поднимает API в сети `medprice-net` на `http://127.0.0.1:8000`.
+- [x] Живые запросы к `/api/v1/services/autocomplete?q=ОАК` и `/api/v1/offers?q=ОАК` возвращают реальные предложения `kdlolymp` + `invivo` за `< 500 мс`.
+- [x] `make test-all` (покрытие `app/api` ≥ 85%), `make lint`, `make typecheck` проходят без ошибок.
 
 **Verification:**
-- [ ] Tests pass: `make test-all`
-- [ ] Build succeeds: `make api-up && make lint && make typecheck`
-- [ ] Manual check: `curl -sS -w "\ntime_total=%{time_total}s\n"` по `/health`, `/meta/filters`, `/services/autocomplete?q=ОАК`, `/offers?q=ОАК`
+- [x] Tests pass: `make test-all`
+- [x] Build succeeds: `make api-up && make lint && make typecheck`
+- [x] Manual check: `curl -sS -w "\ntime_total=%{time_total}s\n"` по `/health`, `/meta/filters`, `/services/autocomplete?q=ОАК`, `/offers?q=ОАК`
 
 **Dependencies:** Task 5
 
@@ -175,5 +175,5 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-search-api.md](../S
 ---
 
 ## Checkpoint 3: After Task 6 (Module Complete)
-- [ ] Все 6 критериев успеха из [SPEC-search-api.md](../SPEC-search-api.md) выполнены и подтверждены
-- [ ] Готово к ревью пользователя и переходу к `SPEC-web-ui.md`
+- [x] Все 6 критериев успеха из [SPEC-search-api.md](../SPEC-search-api.md) выполнены и подтверждены
+- [x] Готово к ревью пользователя и переходу к `SPEC-web-ui.md`
