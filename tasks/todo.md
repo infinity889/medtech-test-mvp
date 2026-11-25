@@ -1,22 +1,22 @@
-# Task List: Normalization (`normalization`) — V1
+# Task List: Search & Comparison API (`search-api`) — V1
 
-Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](../SPEC-normalization.md)
+Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-search-api.md](../SPEC-search-api.md)
 
 ---
 
-## Task 1: Добавить `rapidfuzz`, настройки нормализации в `Settings`, цели в `Makefile` и пересобрать контейнер
+## Task 1: Добавить `fastapi` и `uvicorn[standard]`, настройки API в `Settings`, цели в `Makefile` и пересобрать контейнер
 
-**Description:** Добавить зависимость `rapidfuzz>=3.10,<4.0` в `backend/pyproject.toml`, расширить `Settings` параметрами нормализации (`usd_to_kzt_rate=Decimal("495.00")`, `fuzzy_match_threshold=86.0`, `fuzzy_suggestion_threshold=60.0`, `offer_max_age_days=30`), добавить команды `seed-catalog`, `normalize`, `test-normalization` в `Makefile` и пересобрать контейнер `medprice-backend:dev`.
+**Description:** Добавить `fastapi>=0.115.0,<1.0` и `uvicorn[standard]>=0.32.0,<1.0` в `backend/pyproject.toml`, расширить `Settings` (`admin_api_token`, `cors_origins`, `api_host`, `api_port`), добавить цели `api-up`, `api-down`, `api-dev`, `test-api` в `Makefile`, создать `backend/app/api/__init__.py` и пересобрать контейнер `medprice-backend:dev`.
 
 **Acceptance criteria:**
-- [x] `rapidfuzz` импортируется внутри контейнера `medprice-backend:dev`.
-- [x] `Settings` считывает и валидирует `USD_TO_KZT_RATE` (> 0, `Decimal`), `FUZZY_MATCH_THRESHOLD` (0..100), `FUZZY_SUGGESTION_THRESHOLD` (0..100, ≤ match threshold), `OFFER_MAX_AGE_DAYS` (≥ 1).
-- [x] `Makefile` содержит цели `seed-catalog`, `normalize`, `test-normalization`, `test-all`.
+- [ ] `fastapi` и `uvicorn` импортируются внутри контейнера `medprice-backend:dev`.
+- [ ] `Settings` предоставляет `admin_api_token` (дефолт `dev-admin-token`), `cors_origins_list` и `api_port` (дефолт `8000`).
+- [ ] Все существующие 91 тест (`ingestion` + `normalization`), `ruff` и `mypy` зелёные.
 
 **Verification:**
-- [x] Build succeeds: `make backend-build`
-- [x] Tests pass: `make test-ingestion && make lint && make typecheck`
-- [x] Manual check: `podman run --rm medprice-backend:dev python -c "import rapidfuzz; print(rapidfuzz.__version__)"`
+- [ ] Build succeeds: `make backend-build`
+- [ ] Tests pass: `make test-all && make lint && make typecheck`
+- [ ] Manual check: `podman run --rm medprice-backend:dev python -c "import fastapi, uvicorn; print(fastapi.__version__)"`
 
 **Dependencies:** None
 
@@ -24,208 +24,156 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](.
 - `backend/pyproject.toml`
 - `backend/app/core/config.py`
 - `Makefile`
-- `backend/app/normalization/__init__.py`
+- `backend/app/api/__init__.py`
 
 **Estimated scope:** Small (4 files)
 
 ---
 
-## Task 2: Реализовать ORM-модели слоя `normalization` и обратимую миграцию Alembic `0002`
+## Task 2: Реализовать каркас FastAPI (`schemas.py`, `errors.py`, `deps.py`, `main.py`, `routes/health.py`)
 
-**Description:** Создать SQLAlchemy 2.0 ORM-модели (`ServiceCatalog`, `Clinic`, `ServiceOffer`, `PriceHistory`, `UnmatchedService`) и enum-типы (`ServiceCategory`, `CurrencyCode`, `MatchMethod`, `UnmatchedStatus`), подключить модели в `alembic/env.py` и написать обратимую миграцию `0002_normalization_layer.py` со всеми индексами, FK и `UNIQUE (clinic_id, service_id)`.
+**Description:** Создать Pydantic v2 схемы ответов/запросов (`APIError`, `PaginationMeta`, `HealthResponse`, `FiltersMetaResponse`, `OfferSearch*`, `Clinic*`, `Compare*`, `PriceHistory*`, `Admin*`), единые обработчики ошибок (`400`/`401`/`404`/`409`/`422`/`500`), зависимости DI (`get_session_factory`, `get_ingestion_service`, `get_normalization_service`, `require_admin_token` через `hmac.compare_digest`), CORS-настройки, фабрику `create_app()` в `app/main.py` и маршрут `/api/v1/health`.
 
 **Acceptance criteria:**
-- [x] Миграция `0002_normalization_layer.py` создаёт 5 таблиц (`service_catalog`, `clinics`, `service_offers`, `price_history`, `unmatched_services`) со всеми полями, FK, индексами и уникальными ограничениями из `SPEC-normalization.md`.
-- [x] Миграция обратима (`alembic upgrade head` → `alembic downgrade 0001_ingestion_raw_layer` → `alembic upgrade head`) без потери таблиц `ingestion`.
-- [x] Интеграционный тест проверяет создание таблиц, `UNIQUE (clinic_id, service_id)` и `UNIQUE (raw_record_id)` в `unmatched_services`.
+- [ ] `GET /api/v1/health` возвращает `200 {"status": "ok", "database": "ok"}`.
+- [ ] Неизвестный маршрут и ошибки валидации возвращают единый формат `{"error": {"code", "message", "details"}}`.
+- [ ] CORS preflight для `http://localhost:5173` возвращает корректный `Access-Control-Allow-Origin`.
 
 **Verification:**
-- [x] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_models.py"`
-- [x] Build succeeds: `make migrate && make lint && make typecheck`
-- [x] Manual check: проверить обратимость `0002 → 0001 → 0002` на `medprice_test` и `\dt` в `medprice`
+- [ ] Tests pass: `make test-api API_PYTEST_ARGS="tests/api/test_health_and_meta.py"`
+- [ ] Build succeeds: `make lint && make typecheck`
+- [ ] Manual check: проверить `/openapi.json` через `TestClient`/`AsyncClient`
 
 **Dependencies:** Task 1
 
 **Files likely touched:**
-- `backend/app/normalization/models.py`
-- `backend/alembic/env.py`
-- `backend/alembic/versions/0002_normalization_layer.py`
-- `backend/tests/normalization/test_models.py`
+- `backend/app/api/errors.py`
+- `backend/app/api/schemas.py`
+- `backend/app/api/deps.py`
+- `backend/app/api/routes/health.py`
+- `backend/app/main.py`
 
-**Estimated scope:** Medium (4 files)
+**Estimated scope:** Medium (5 files)
 
 ---
 
 ## Checkpoint 1: After Tasks 1–2 (Foundation)
-- [x] Контейнер `medprice-backend:dev` пересобран с `rapidfuzz`
-- [x] Миграция `0002_normalization_layer` применена и проверена на обратимость
-- [x] Существующие 48 тестов `ingestion` и новые тесты моделей `normalization` проходят чисто
+- [ ] Контейнер `medprice-backend:dev` пересобран с `fastapi` + `uvicorn`
+- [ ] `/api/v1/health`, CORS и единая обработка ошибок работают и протестированы
 
 ---
 
-## Task 3: Реализовать нормализацию текста и конвертацию валют `KZT`/`USD → KZT` (`text_utils.py`)
+## Task 3: Реализовать `SearchQueryService` и маршруты `/meta/filters`, `/services/autocomplete`, `/offers`
 
-**Description:** Реализовать чистые утилиты предобработки названий услуг (`ё→е`, снятие кавычек/звёздочек/скобок-мусора, сжатие пробелов, снятие типовых префиксов вроде «Кровь.», «Моча.», «Приём врача»), маппинг строкового `category_hint` в `ServiceCategory`, генерацию стабильного `clinic_key` (SHA-256) и конвертацию валют `convert_to_kzt(price, currency, usd_rate)` через `Decimal`.
+**Description:** Реализовать сервисный слой чтения `SearchQueryService` (агрегаты фильтров, ранжированное автодополнение по справочнику и синонимам, поиск и сравнение предложений с фильтрами города/категории/цены/рейтинга/онлайн-записи, расчётом расстояния Haversine, сортировкой `price_asc|price_desc|distance_asc|updated_desc|rating_desc`, ссылками 2GIS/Google Maps и жёстким правилом свежести ≤ 30 дней) и подключить маршруты.
 
 **Acceptance criteria:**
-- [x] `normalize_service_text` детерминированно приводит «Общий анализ крови (ОАК)*», «Кровь. Общий анализ» и «Ёмкость...» к чистому нормализованному виду.
-- [x] `convert_to_kzt` возвращает `Decimal` с точностью `0.01` (`ROUND_HALF_UP`) для `KZT` и `USD`, и отклоняет неподдерживаемые валюты / неположительные цены.
-- [x] `map_category_hint` корректно маппит русские/английские подсказки в `ServiceCategory` (`lab`, `doctor`, `diagnostics`, `procedure`) или `None`.
+- [ ] `GET /api/v1/meta/filters` возвращает города, категории с русскими названиями, мин/макс цены и дату последнего обновления.
+- [ ] `GET /api/v1/services/autocomplete?q=ОАК` и `?q=CBC` возвращают «Общий анализ крови (ОАК)» с `offers_count` и `min_price_kzt`.
+- [ ] `GET /api/v1/offers` поддерживает все фильтры, сортировки (включая `distance_asc` по `lat`/`lng`), пагинацию, агрегаты `summary` и **никогда** не возвращает предложения старше 30 дней.
+- [ ] Некорректные диапазоны (`min_price > max_price` или `lat` без `lng`) возвращают `422 VALIDATION_ERROR`.
 
 **Verification:**
-- [x] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_text_and_currency.py"`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: убедиться, что везде используется `Decimal`, без `float` для денег
+- [ ] Tests pass: `make test-api API_PYTEST_ARGS="tests/api/test_search_and_offers.py"`
+- [ ] Build succeeds: `make lint && make typecheck`
+- [ ] Manual check: убедиться, что `distance_km` корректен по формуле Haversine
 
 **Dependencies:** Task 2
 
 **Files likely touched:**
-- `backend/app/normalization/text_utils.py`
-- `backend/tests/normalization/test_text_and_currency.py`
+- `backend/app/api/query_service.py`
+- `backend/app/api/routes/health.py`
+- `backend/app/api/routes/services.py`
+- `backend/app/api/routes/offers.py`
+- `backend/tests/api/test_search_and_offers.py`
 
-**Estimated scope:** Small (2 files)
+**Estimated scope:** Medium (5 files)
 
 ---
 
-## Task 4: Сформировать курируемый справочник `catalog_seed.json` (65–80 услуг на базе реальных данных РК)
+## Task 4: Реализовать маршруты `/clinics`, `/clinics/{clinic_id}`, `/compare` и `/services/{service_id}/price-history`
 
-**Description:** Проанализировать реальные названия услуг из `raw_service_records` (`kdlolymp`, `invivo`, `doq`) и составить версионируемый JSON-справочник `backend/app/normalization/data/catalog_seed.json` на 65–80 наиболее востребованных позиций по всем 4 категориям ТЗ (`lab`, `doctor`, `diagnostics`, `procedure`) с богатыми синонимами и аббревиатурами (включая `ОАК`/`CBC`, `ОАМ`, `ТТГ`, `СОЭ`, `Ферритин`, `Витамин D`, `Терапевт`, `Кардиолог`, `УЗИ ОБП`, `ЭКГ`, `МРТ` и др.).
+**Description:** Реализовать список клиник (с фильтром `has_geo=true` для карты Leaflet), карточку клиники со всеми активными услугами ≤ 30 дней и ссылками маршрутов 2GIS/Google Maps, матрицу табличного сравнения 2–5 клиник (`GET /api/v1/compare` с определением `cheapest_clinic_id`) и историю изменения цен (`GET /api/v1/services/{service_id}/price-history`).
 
 **Acceptance criteria:**
-- [x] `catalog_seed.json` содержит ≥ 65 (строго ≥ 50 по ТЗ) уникальных позиций с валидными `code`, `canonical_name`, `category`, `synonyms`.
-- [x] Представлены все 4 категории (`lab`, `doctor`, `diagnostics`, `procedure`), нет дубликатов `code`, `canonical_name` или пересекающихся точных синонимов между разными услугами.
-- [x] Кейс ТЗ (`«ОАК»`, `«Общий анализ крови»`, `«CBC»`, `«Клинический анализ крови»`) присутствует в синонимах единой услуги `Общий анализ крови (ОАК)`.
+- [ ] `GET /api/v1/clinics?has_geo=true` возвращает только клиники с непустыми `latitude` и `longitude`.
+- [ ] `GET /api/v1/clinics/{clinic_id}` возвращает контакты, график работы, ссылки маршрутов и только актуальные (≤ 30 дней) услуги; несуществующий UUID → `404 NOT_FOUND`.
+- [ ] `GET /api/v1/compare` сравнивает 2–5 клиник, корректно отмечает `cheapest_clinic_id` в каждой строке и возвращает `422` при `< 2` или `> 5` клиниках.
+- [ ] `GET /api/v1/services/{service_id}/price-history` возвращает хронологические точки цен с `clinic_name` и `city`.
 
 **Verification:**
-- [x] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_catalog_seed.py"`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: проверить распределение позиций по 4 категориям в выводе теста
+- [ ] Tests pass: `make test-api API_PYTEST_ARGS="tests/api/test_clinics_and_compare.py"`
+- [ ] Build succeeds: `make lint && make typecheck`
+- [ ] Manual check: проверить генерацию ссылок 2GIS и Google Maps как по GPS, так и по адресу-фоллбэку
 
-**Dependencies:** Task 2
+**Dependencies:** Task 3
 
 **Files likely touched:**
-- `backend/app/normalization/data/catalog_seed.json`
-- `backend/app/normalization/catalog_loader.py`
-- `backend/tests/normalization/test_catalog_seed.py`
+- `backend/app/api/query_service.py`
+- `backend/app/api/routes/clinics.py`
+- `backend/app/api/routes/services.py`
+- `backend/app/main.py`
+- `backend/tests/api/test_clinics_and_compare.py`
+
+**Estimated scope:** Medium (5 files)
+
+---
+
+## Checkpoint 2: After Tasks 3–4 (Public Patient API)
+- [ ] Все публичные пациентские маршруты (`/health`, `/meta/filters`, `/services/autocomplete`, `/offers`, `/clinics`, `/clinics/{id}`, `/compare`, `/price-history`) работают и протестированы
+- [ ] `ruff` и `mypy --strict` чистые
+
+---
+
+## Task 5: Реализовать админ-маршруты `/api/v1/admin/*` с защитой `X-Admin-Token` и блокировкой `409`
+
+**Description:** Реализовать защищённые `X-Admin-Token` админ-эндпоинты (`GET /admin/sources`, `scrape-runs`, `scrape-errors`, `stats`, `unmatched`; `POST /admin/scrape-runs` с `asyncio.Lock` и возвратом `409 SCRAPE_IN_PROGRESS`; `POST /admin/unmatched/{id}/resolve` и `/ignore`), полностью делегируя операции фасадам `IngestionService` и `NormalizationService`.
+
+**Acceptance criteria:**
+- [ ] Запрос без `X-Admin-Token` или с неверным токеном возвращает `401 UNAUTHORIZED` в формате `APIError`.
+- [ ] `GET /api/v1/admin/unmatched` возвращает пагинированный список с обогащённым полем `suggested_service_name`.
+- [ ] `POST /api/v1/admin/unmatched/{id}/resolve` создаёт актуальное предложение, которое сразу находится в `GET /api/v1/offers`; `/ignore` переводит запись в `ignored`.
+- [ ] `POST /api/v1/admin/scrape-runs` возвращает `{runs, normalization_summary}`, а параллельный вызов при активном запуске возвращает `409 SCRAPE_IN_PROGRESS`.
+
+**Verification:**
+- [ ] Tests pass: `make test-api API_PYTEST_ARGS="tests/api/test_admin_endpoints.py"`
+- [ ] Build succeeds: `make lint && make typecheck`
+- [ ] Manual check: убедиться, что `admin.py` не обращается к таблицам `raw_service_records` напрямую
+
+**Dependencies:** Task 4
+
+**Files likely touched:**
+- `backend/app/api/routes/admin.py`
+- `backend/app/main.py`
+- `backend/tests/api/test_admin_endpoints.py`
 
 **Estimated scope:** Small (3 files)
 
 ---
 
-## Task 5: Реализовать детерминированный `ServiceMatcher` (`exact` → `synonym` → `RapidFuzz`)
+## Task 6: Живой запуск API (`make api-up`) на реальной БД `medprice`, замер latency и обновление `README.md`
 
-**Description:** Реализовать матчер `ServiceMatcher`, индексирующий канонические названия и синонимы справочника в памяти, и выполняющий 3-ступенчатый поиск: 1) `exact` по нормализованному `canonical_name`, 2) `synonym` по нормализованным синонимам, 3) категорийно-изолированный `RapidFuzz` (`fuzz.token_sort_ratio` / `fuzz.ratio` с защитой от коротких ложных совпадений типа `АЛТ`/`АСТ`) с порогом авто-матча `86.0` и подсказкой кандидата `>= 60.0`.
-
-**Acceptance criteria:**
-- [x] «ОАК», «Общий анализ крови», «CBC», «Клинический анализ крови» и реальные названия из `kdlolymp`/`invivo` сводятся к одной услуге `Общий анализ крови (ОАК)`.
-- [x] Услуги с известным `category_hint` никогда не матчатся через `RapidFuzz` с другой категорией (напр. `lab` не склеивается с `doctor`).
-- [x] Похожие, но разные короткие анализы (`АЛТ` vs `АСТ`, `Т3` vs `Т4`, `Витамин D` vs `Витамин B12`) не склеиваются ошибочно.
-- [x] Нераспознанная услуга возвращает `is_matched == False` и заполняет `suggested_service_id` / `suggested_score`, если лучший кандидат `>= 60.0`.
-
-**Verification:**
-- [x] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_matcher.py"`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: проверить точность на наборе из ≥ 15 реальных названий из `kdlolymp`, `invivo`, `doq`
-
-**Dependencies:** Tasks 3, 4
-
-**Files likely touched:**
-- `backend/app/normalization/matcher.py`
-- `backend/tests/normalization/test_matcher.py`
-
-**Estimated scope:** Small (2 files)
-
----
-
-## Checkpoint 2: After Tasks 3–5 (Dictionary & Matching Engine)
-- [x] `text_utils`, `catalog_seed.json` (≥ 65 позиций) и `ServiceMatcher` полностью протестированы
-- [x] `ruff check` и `mypy --strict` проходят без ошибок
-
----
-
-## Task 6: Реализовать DTO (`schemas.py`) и `NormalizationPipeline`
-
-**Description:** Создать Pydantic v2 DTO (`ServiceCatalogDTO`, `ClinicDTO`, `ServiceOfferDTO`, `UnmatchedServiceDTO`, `PriceHistoryPointDTO`, `SeedSummary`, `NormalizationSummary`) и оркестратор `NormalizationPipeline`, читающий батчи из `IngestionService.iter_raw_records(...)`, дедуплицирующий `clinics`, выполняющий upsert `service_offers` (с выбором свежайшей/минимальной цены при коллизии `(clinic_id, service_id)`), фиксирующий изменения в `price_history` и отправляющий нераспознанные строки в `unmatched_services`.
+**Description:** Поднять FastAPI-контейнер `medprice-api` на порту `8000` поверх реальной БД `medprice` (64 клиники, 499 предложений, 88 услуг), проверить реальные запросы `/health`, `/meta/filters`, `/services/autocomplete?q=ОАК`, `/offers?q=ОАК`, `/clinics`, `/compare`, `/docs`, замерить время ответа (`< 500 мс`), подтвердить покрытие ≥ 85% по `app/api` и обновить `README.md`.
 
 **Acceptance criteria:**
-- [x] Прогон пайплайна на raw-данных создаёт `clinics`, `service_offers`, начальные точки `price_history` и записи `unmatched_services`.
-- [x] Повторный прогон на тех же raw-данных идемпотентен: 0 дублей в `clinics`, `service_offers`, `price_history` и `unmatched_services`.
-- [x] Появление новой цены в raw-слое обновляет `service_offers.price_kzt` и добавляет новую запись в `price_history`.
-- [x] Предложение с `parsed_at` старше 30 дней сохраняется с `is_active = False`.
+- [ ] `make api-up` поднимает API в сети `medprice-net` на `http://127.0.0.1:8000`.
+- [ ] Живые запросы к `/api/v1/services/autocomplete?q=ОАК` и `/api/v1/offers?q=ОАК` возвращают реальные предложения `kdlolymp` + `invivo` за `< 500 мс`.
+- [ ] `make test-all` (покрытие `app/api` ≥ 85%), `make lint`, `make typecheck` проходят без ошибок.
 
 **Verification:**
-- [x] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_pipeline.py"`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: проверить, что `NormalizationPipeline` не делает ни одной записи в таблицы `ingestion`
+- [ ] Tests pass: `make test-all`
+- [ ] Build succeeds: `make api-up && make lint && make typecheck`
+- [ ] Manual check: `curl -sS -w "\ntime_total=%{time_total}s\n"` по `/health`, `/meta/filters`, `/services/autocomplete?q=ОАК`, `/offers?q=ОАК`
 
 **Dependencies:** Task 5
 
 **Files likely touched:**
-- `backend/app/normalization/schemas.py`
-- `backend/app/normalization/pipeline.py`
-- `backend/tests/normalization/test_pipeline.py`
-
-**Estimated scope:** Medium (3 files)
-
----
-
-## Task 7: Реализовать публичный `NormalizationService` и CLI (`cli.py`)
-
-**Description:** Реализовать фасад `NormalizationService` (полный контракт для `search-api`: `seed_catalog`, `run_normalization`, `list_catalog`, `list_unmatched`, `resolve_unmatched` с добавлением синонима и авто-резолвом совпадающих `pending`-записей, `ignore_unmatched`, `get_price_history`, `refresh_stale_offers`, `close`) и CLI (`seed-catalog`, `run`, `refresh-stale`, `stats`).
-
-**Acceptance criteria:**
-- [x] `seed_catalog()` идемпотентно загружает `catalog_seed.json` (повторный вызов обновляет без дублей).
-- [x] `resolve_unmatched(id, service_id, add_as_synonym=True)` переводит запись в `mapped`, создаёт `service_offers` + `price_history`, добавляет `service_name_raw` в синонимы и перематчивает совпадающие `pending`-записи.
-- [x] `ignore_unmatched(id)` переводит запись в `ignored`, `refresh_stale_offers(30)` деактивирует предложения старше 30 дней, `get_price_history(...)` возвращает хронологический ряд цен.
-- [x] CLI `python -m app.normalization.cli seed-catalog | run | refresh-stale | stats` работает внутри контейнера и корректно освобождает `Engine`.
-
-**Verification:**
-- [x] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_service.py"`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: проверить `python -m app.normalization.cli stats`
-
-**Dependencies:** Task 6
-
-**Files likely touched:**
-- `backend/app/normalization/service.py`
-- `backend/app/normalization/cli.py`
-- `backend/tests/normalization/test_service.py`
-
-**Estimated scope:** Medium (3 files)
-
----
-
-## Checkpoint 3: After Tasks 6–7 (Pipeline & Public Contract)
-- [x] Весь движок `normalization` и контракт `NormalizationService` протестированы против реальной PostgreSQL 16
-- [x] `make test-normalization`, `make test-ingestion`, `make lint`, `make typecheck` проходят чисто
-
----
-
-## Task 8: Живой прогон на 2 625 реальных записях РК, верификация пересечений и обновление `README.md`
-
-**Description:** Применить миграцию `0002` на `medprice`, выполнить `make seed-catalog && make normalize` на реальных 2 625 записях из `kdlolymp`, `invivo` и `doq`, проверить качество матчинга и реальные межклинические сравнения цен (одна услуга в нескольких клиниках/лабораториях), проверить идемпотентность повторного `make normalize`, подтвердить покрытие ≥ 85% и обновить `README.md`.
-
-**Acceptance criteria:**
-- [x] В `service_catalog` загружено ≥ 65 позиций по 4 категориям.
-- [x] В `service_offers` есть реальные нормализованные предложения по всем 3 источникам (`kdlolymp`, `invivo`, `doq`) и реальные пересечения цен между клиниками по ключевым услугам (напр. ОАК, ОАМ, ТТГ, Ферритин, Терапевт, Кардиолог, УЗИ).
-- [x] Повторный `make normalize` даёт 0 новых дублей в `clinics`, `service_offers`, `price_history`, `unmatched_services`.
-- [x] Покрытие `make test-normalization` ≥ 85%, все тесты (`ingestion` + `normalization`), `ruff` и `mypy` зелёные.
-
-**Verification:**
-- [x] Tests pass: `make test-all`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: SQL-отчёт по `service_offers`, `clinics`, `price_history`, `unmatched_services` и пример сравнения цен по «Общий анализ крови (ОАК)» и «Приём терапевта»
-
-**Dependencies:** Task 7
-
-**Files likely touched:**
 - `README.md`
-- `backend/app/normalization/data/catalog_seed.json` *(при необходимости точечное дообогащение синонимов по результатам живого прогона)*
 
-**Estimated scope:** Small (2 files)
+**Estimated scope:** Small (1 file)
 
 ---
 
-## Checkpoint 4: After Task 8 (Module Complete)
-- [x] Все 8 критериев успеха из [SPEC-normalization.md](../SPEC-normalization.md) выполнены и подтверждены
-- [ ] Готово к ревью пользователя и переходу к `SPEC-search-api.md`
+## Checkpoint 3: After Task 6 (Module Complete)
+- [ ] Все 6 критериев успеха из [SPEC-search-api.md](../SPEC-search-api.md) выполнены и подтверждены
+- [ ] Готово к ревью пользователя и переходу к `SPEC-web-ui.md`

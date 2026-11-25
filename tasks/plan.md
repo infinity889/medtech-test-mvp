@@ -1,81 +1,65 @@
-# Implementation Plan: Normalization (`normalization`) — V1
+# Implementation Plan: Search & Comparison API (`search-api`) — V1
 
-Source spec: [SPEC-normalization.md](../SPEC-normalization.md)
+Source spec: [SPEC-search-api.md](../SPEC-search-api.md)
 
 ## Overview
 
-Реализуем модуль `normalization` — детерминированный пайплайн приведения сырых записей из `raw_service_records` (через контракт `IngestionService.iter_raw_records`) к единой витрине медицинских услуг Казахстана: справочник ≥ 50 (целевой объём 65–80) канонических услуг по 4 категориям, `RapidFuzz`-матчинг с категорийной изоляцией, конвертация валют `USD → KZT` через `Decimal`, дедуплицированные таблицы `clinics` и `service_offers`, история цен `price_history`, очередь ручной разметки `unmatched_services` с пополнением синонимов и правило свежести ≤ 30 дней.
+Реализуем модуль `search-api` — быстрый, строго типизированный FastAPI REST API (`/api/v1`) для пациентского поиска и сравнения цен на медицинские услуги в Казахстане (автодополнение, фильтры, сортировка по цене/расстоянию/свежести/рейтингу, правило актуальности ≤ 30 дней, карточка клиники, карта клиник, матрица сравнения 2–5 клиник, история цен) и защищённые `X-Admin-Token` админ-эндпоинты для ручного запуска парсинга и разбора `unmatched queue`.
 
 ## Architecture Decisions
 
-1. **Строгая односторонняя зависимость (`normalization → ingestion`)**: `NormalizationPipeline` читает сырые данные исключительно через `IngestionService.iter_raw_records(...)` и никогда не изменяет таблицы raw-слоя.
-2. **Категорийная изоляция матчинга**: при наличии `category_hint` (`лаборатория`, `приём врача`, `диагностика`, `процедура`) `RapidFuzz` сопоставляет только в рамках соответствующей категории `ServiceCategory`, исключая ложные склейки между анализами и приёмами врачей.
-3. **Уникальность предложения `UNIQUE (clinic_id, service_id)`**: одна актуальная запись на пару `(клиника, услуга)`; если в одном сыром прайсе несколько вариантов одной услуги в той же клинике, выбирается более свежая запись (`parsed_at`), а при равной свежести — минимальная `price_kzt` (аналогично Aviasales).
-4. **Безубыточная история цен (`price_history`)**: снимок добавляется только при первом появлении пары `(clinic_id, service_id)` и при реальном изменении `price_kzt` относительно последней точки — повторный запуск `make normalize` даёт 0 дублей.
-5. **Обратная связь ручной разметки**: `resolve_unmatched(..., add_as_synonym=True)` не только создаёт `service_offers` для выбранной записи, но и добавляет `service_name_raw` в `service_catalog.synonyms` и автоматически резолвит все совпадающие `pending`-записи с тем же `service_name_raw`.
+1. **Нулевые новые миграции БД**: `search-api` целиком работает поверх таблиц и сервисных контрактов модулей `normalization` и `ingestion`; все мутации (`trigger_run`, `run_normalization`, `resolve_unmatched`, `ignore_unmatched`) проходят исключительно через `IngestionService` и `NormalizationService`.
+2. **Двойная гарантия свежести ≤ 30 дней**: публичные запросы `/offers`, `/clinics/{id}`, `/compare` и агрегаты `/meta/filters`, `/services/autocomplete` всегда фильтруют `is_active = true AND parsed_at >= now() - interval '30 days'`, не полагаясь только на периодический джоб `refresh_stale_offers`.
+3. **Единый формат ошибок и пагинации**: кастомные обработчики исключений (`APIError`, `RequestValidationError`, `HTTPException`, `Exception`) гарантируют одинаковую JSON-структуру `{"error": {"code", "message", "details"}}` без утечки внутренних стектрейсов.
+4. **Haversine + маршруты 2GIS / Google Maps**: расстояние до клиники вычисляется по координатам `(lat, lng)` (клиники без GPS помещаются в конец при `sort_by=distance_asc`); для каждой клиники генерируются прямые ссылки маршрута в 2GIS и Google Maps.
+5. **Защита от параллельных запусков парсинга**: `POST /api/v1/admin/scrape-runs` защищён `asyncio.Lock` — конкурентный запрос получает `409 SCRAPE_IN_PROGRESS`.
 
 ## Dependency Graph
 
 ```text
-Task 1 (rapidfuzz in Containerfile/pyproject + Settings + Makefile)
+Task 1 (fastapi + uvicorn in pyproject/container, API Settings, Makefile targets)
    │
-   └── Task 2 (Normalization ORM models + Alembic 0002 migration + schema tests)
+   └── Task 2 (API schemas, unified APIError handlers, DI deps + X-Admin-Token, FastAPI app shell + /health)
           │
-          ├── Task 3 (text_utils: text normalization + USD→KZT Decimal converter)
-          └── Task 4 (catalog_seed.json: 65–80 services from real KZ raw data)
+          ├── Task 3 (SearchQueryService: /meta/filters, /services/autocomplete, /offers with filters/Haversine/30d freshness)
+          │
+          ├── Task 4 (Clinics, Clinic Detail, 2GIS/Google Maps links, /compare 2–5 clinics matrix, /price-history)
+          │
+          └── Task 5 (Admin routes: sources, runs, errors, stats, unmatched resolve/ignore, POST scrape-runs + 409 lock)
                  │
-                 └── Task 5 (ServiceMatcher: exact → synonym → category-isolated RapidFuzz)
-                        │
-                        └── Task 6 (DTOs + NormalizationPipeline: clinics, offers, price_history, unmatched)
-                               │
-                               └── Task 7 (NormalizationService contract + CLI + synonym feedback loop + 30d stale)
-                                      │
-                                      └── Task 8 (Live run on 2,625 real records, cross-clinic verification & README)
+                 └── Task 6 (Live API smoke test on medprice via podman, latency < 500ms check, README update)
 ```
 
 ## Task List
 
-Подробные карточки задач (описание, критерии приёмки, команды проверки, файлы, размер) находятся в [tasks/todo.md](./todo.md).
+Подробные карточки задач находятся в [tasks/todo.md](./todo.md).
 
-### Phase 1: Foundation
-- [x] Task 1: Добавить `rapidfuzz`, настройки нормализации в `Settings`, цели в `Makefile` и пересобрать контейнер
-- [x] Task 2: Реализовать ORM-модели слоя `normalization` и обратимую миграцию Alembic `0002`
+### Phase 1: Foundation & App Shell
+- [ ] Task 1: Добавить `fastapi` и `uvicorn[standard]`, настройки API в `Settings`, цели `api-up`/`api-down`/`test-api` в `Makefile` и пересобрать контейнер
+- [ ] Task 2: Реализовать `schemas.py`, `errors.py`, `deps.py`, `main.py` и `routes/health.py` (`/health`, CORS, `APIError`, `X-Admin-Token`)
 
 ### Checkpoint 1: Foundation
-- [x] Образ `medprice-backend:dev` пересобран с `rapidfuzz`, миграция `0002` обратима, существующие 48 тестов `ingestion` зелёные
+- [ ] Контейнер пересобран с FastAPI/uvicorn, `/api/v1/health` и OpenAPI `/docs` работают, единый формат ошибок протестирован
 
-### Phase 2: Dictionary & Matching Engine
-- [x] Task 3: Реализовать нормализацию текста и конвертацию валют `KZT`/`USD → KZT` (`text_utils.py`)
-- [x] Task 4: Сформировать курируемый справочник `catalog_seed.json` (65–80 услуг по 4 категориям на базе реальных данных РК)
-- [x] Task 5: Реализовать детерминированный `ServiceMatcher` (`exact` → `synonym` → `RapidFuzz`)
+### Phase 2: Patient Search, Clinics, Compare & Price History
+- [ ] Task 3: Реализовать `query_service.py` и маршруты `/meta/filters`, `/services/autocomplete`, `/offers` (все фильтры, сортировки, Haversine, свежесть ≤ 30 дней)
+- [ ] Task 4: Реализовать маршруты `/clinics`, `/clinics/{clinic_id}`, `/compare` (2–5 клиник) и `/services/{service_id}/price-history`
 
-### Checkpoint 2: Dictionary & Matching Engine
-- [x] Справочник ≥ 50 позиций и матчер (включая кейс `ОАК`/`CBC` и категорийную изоляцию) покрыты юнит-тестами, `ruff` и `mypy` чистые
+### Checkpoint 2: Public API
+- [ ] Все пациентские эндпоинты протестированы против PostgreSQL (`medprice_test`), включая правило 30 дней, Haversine и сравнение 2–5 клиник
 
-### Phase 3: Pipeline, Public Contract & CLI
-- [x] Task 6: Реализовать DTO (`schemas.py`) и `NormalizationPipeline` (клиники, предложения, `price_history`, `unmatched_services`)
-- [x] Task 7: Реализовать публичный `NormalizationService` (включая `resolve_unmatched`, `ignore_unmatched`, `get_price_history`, `refresh_stale_offers`) и CLI
+### Phase 3: Admin API & Live Verification
+- [ ] Task 5: Реализовать защищённые `X-Admin-Token` маршруты `/api/v1/admin/*` (sources, runs, errors, stats, unmatched resolve/ignore, scrape-runs с `409` lock)
+- [ ] Task 6: Провести живой прогон контейнера API (`make api-up`) на 499 реальных предложениях `medprice`, замерить задержки `< 500 мс`, проверить покрытие ≥ 85% и обновить `README.md`
 
-### Checkpoint 3: Pipeline & Service
-- [x] Интеграционные тесты против PostgreSQL подтверждают 0 дублей при повторе, версионирование `price_history`, обратную связь синонимов и деактивацию > 30 дней
-
-### Phase 4: Live Verification on Real KZ Data
-- [x] Task 8: Прогнать `make seed-catalog && make normalize` на 2 625 реальных raw-записях, проверить межклинические пересечения, идемпотентность, покрытие ≥ 85% и обновить `README.md`
-
-### Checkpoint 4: Module Complete
-- [x] Все 8 критериев успеха из `SPEC-normalization.md` выполнены, покрытие ≥ 85%, `ruff` и `mypy` чистые
-- [ ] Ревью с человеком перед переходом к `SPEC-search-api.md`
-
-## Parallelization Opportunities
-
-- **Можно выполнять параллельно**: Task 3 (`text_utils.py`) и Task 4 (`catalog_seed.json`) после Task 2.
-- **Строго последовательно**: Task 1 → Task 2 → Task 5 → Task 6 → Task 7 → Task 8.
+### Checkpoint 3: Module Complete
+- [ ] Все 6 критериев успеха из `SPEC-search-api.md` выполнены, `make test-all`, `make lint`, `make typecheck` чистые
+- [ ] Ревью с человеком перед переходом к `SPEC-web-ui.md`
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| Ложные склейки похожих анализов в `RapidFuzz` (напр. «Витамин B12» и «Витамин D» или «АЛТ» и «АСТ») | High | Консервативный порог `86.0`, категорийная изоляция и проверка коротких/конфликтных анализов в юнит-тестах `test_matcher.py`; сомнительные уходят в `unmatched_services` |
-| Дубликаты названий с разным регистром/звёздочками (`Подсчет ретикулоцитов*`, `Кровь. Гематокрит`) снижают recall | Medium | Анализируем топ реальных строк из `raw_service_records` при составлении `catalog_seed.json` (Task 4) и снимаем шумовые префиксы/символы в `text_utils.py` |
-| Пересборка `medprice-backend:dev` при добавлении `rapidfuzz` займёт время | Low | `rapidfuzz` распространяется как готовый binary wheel под `cp312-manylinux`; пересборка делается один раз в Task 1 |
-| Старые raw-записи `kdlolymp`/`invivo` без адреса из раннего прогона конфликтуют с новыми записями с адресом | Medium | Дедупликация в `clinics` по `(source_id, clinic_name, city, address)`; перед финальным живым прогоном в Task 8 проверим чистоту витрины `clinics` и `service_offers` |
+| Длительный синхронный парсинг в `POST /admin/scrape-runs` может заблокировать event loop или быть запущен дважды | Medium | `asyncio.Lock` с немедленным `409 SCRAPE_IN_PROGRESS` при повторном вызове + асинхронный `IngestionService.trigger_run` + опциональный `limit` |
+| Утечка просроченных цен (> 30 дней), если забыть фильтр `parsed_at >= cutoff` в одном из запросов | High | Выносим единый helper `_freshness_cutoff()` в `SearchQueryService` и проверяем отдельным тестом на `/offers` и `/clinics/{id}` |
+| Проблемы CORS при подключении React/Vite (`localhost:5173`) в модуле `web-ui` | Low | Явный `CORSMiddleware` из `Settings.cors_origins` + тест на preflight `OPTIONS` |
