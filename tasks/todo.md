@@ -130,15 +130,15 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-search-api.md](../S
 **Description:** Реализовать защищённые `X-Admin-Token` админ-эндпоинты (`GET /admin/sources`, `scrape-runs`, `scrape-errors`, `stats`, `unmatched`; `POST /admin/scrape-runs` с `asyncio.Lock` и возвратом `409 SCRAPE_IN_PROGRESS`; `POST /admin/unmatched/{id}/resolve` и `/ignore`), полностью делегируя операции фасадам `IngestionService` и `NormalizationService`.
 
 **Acceptance criteria:**
-- [ ] Запрос без `X-Admin-Token` или с неверным токеном возвращает `401 UNAUTHORIZED` в формате `APIError`.
-- [ ] `GET /api/v1/admin/unmatched` возвращает пагинированный список с обогащённым полем `suggested_service_name`.
-- [ ] `POST /api/v1/admin/unmatched/{id}/resolve` создаёт актуальное предложение, которое сразу находится в `GET /api/v1/offers`; `/ignore` переводит запись в `ignored`.
-- [ ] `POST /api/v1/admin/scrape-runs` возвращает `{runs, normalization_summary}`, а параллельный вызов при активном запуске возвращает `409 SCRAPE_IN_PROGRESS`.
+- [x] Запрос без `X-Admin-Token` или с неверным токеном возвращает `401 UNAUTHORIZED` в формате `APIError`.
+- [x] `GET /api/v1/admin/unmatched` возвращает пагинированный список с обогащённым полем `suggested_service_name`.
+- [x] `POST /api/v1/admin/unmatched/{id}/resolve` создаёт актуальное предложение, которое сразу находится в `GET /api/v1/offers`; `/ignore` переводит запись в `ignored`.
+- [x] `POST /api/v1/admin/scrape-runs` возвращает `{runs, normalization_summary}`, а параллельный вызов при активном запуске возвращает `409 SCRAPE_IN_PROGRESS`.
 
 **Verification:**
-- [ ] Tests pass: `make test-api API_PYTEST_ARGS="tests/api/test_admin_endpoints.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: убедиться, что `admin.py` не обращается к таблицам `raw_service_records` напрямую
+- [x] Tests pass: `make test-api API_PYTEST_ARGS="tests/api/test_admin_endpoints.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: убедиться, что `admin.py` не обращается к таблицам `raw_service_records` напрямую
 
 **Dependencies:** Task 4
 

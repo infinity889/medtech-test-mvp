@@ -42,6 +42,8 @@ from app.normalization.models import (
     ServiceCatalog,
     ServiceCategory,
     ServiceOffer,
+    UnmatchedService,
+    UnmatchedStatus,
 )
 from app.normalization.text_utils import normalize_service_text
 
@@ -800,3 +802,13 @@ class SearchQueryService:
             canonical_name=catalog.canonical_name,
             points=points,
         )
+
+    def count_unmatched(self, *, status_filter: UnmatchedStatus) -> int:
+        """Count unmatched queue entries by lifecycle status for admin pagination."""
+        with self._session_factory() as session:
+            count = session.scalar(
+                select(func.count())
+                .select_from(UnmatchedService)
+                .where(UnmatchedService.status == status_filter)
+            )
+        return int(count or 0)

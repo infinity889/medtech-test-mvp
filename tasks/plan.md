@@ -49,7 +49,7 @@ Task 1 (fastapi + uvicorn in pyproject/container, API Settings, Makefile targets
 - [x] Все пациентские эндпоинты протестированы против PostgreSQL (`medprice_test`), включая правило 30 дней, Haversine и сравнение 2–5 клиник
 
 ### Phase 3: Admin API & Live Verification
-- [ ] Task 5: Реализовать защищённые `X-Admin-Token` маршруты `/api/v1/admin/*` (sources, runs, errors, stats, unmatched resolve/ignore, scrape-runs с `409` lock)
+- [x] Task 5: Реализовать защищённые `X-Admin-Token` маршруты `/api/v1/admin/*` (sources, runs, errors, stats, unmatched resolve/ignore, scrape-runs с `409` lock)
 - [ ] Task 6: Провести живой прогон контейнера API (`make api-up`) на 499 реальных предложениях `medprice`, замерить задержки `< 500 мс`, проверить покрытие ≥ 85% и обновить `README.md`
 
 ### Checkpoint 3: Module Complete
