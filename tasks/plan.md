@@ -36,10 +36,10 @@ Task 1 (fastapi + uvicorn in pyproject/container, API Settings, Makefile targets
 
 ### Phase 1: Foundation & App Shell
 - [x] Task 1: Добавить `fastapi` и `uvicorn[standard]`, настройки API в `Settings`, цели `api-up`/`api-down`/`test-api` в `Makefile` и пересобрать контейнер
-- [ ] Task 2: Реализовать `schemas.py`, `errors.py`, `deps.py`, `main.py` и `routes/health.py` (`/health`, CORS, `APIError`, `X-Admin-Token`)
+- [x] Task 2: Реализовать `schemas.py`, `errors.py`, `deps.py`, `main.py` и `routes/health.py` (`/health`, CORS, `APIError`, `X-Admin-Token`)
 
 ### Checkpoint 1: Foundation
-- [ ] Контейнер пересобран с FastAPI/uvicorn, `/api/v1/health` и OpenAPI `/docs` работают, единый формат ошибок протестирован
+- [x] Контейнер пересобран с FastAPI/uvicorn, `/api/v1/health` и OpenAPI `/docs` работают, единый формат ошибок протестирован
 
 ### Phase 2: Patient Search, Clinics, Compare & Price History
 - [ ] Task 3: Реализовать `query_service.py` и маршруты `/meta/filters`, `/services/autocomplete`, `/offers` (все фильтры, сортировки, Haversine, свежесть ≤ 30 дней)

@@ -35,14 +35,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-search-api.md](../S
 **Description:** Создать Pydantic v2 схемы ответов/запросов (`APIError`, `PaginationMeta`, `HealthResponse`, `FiltersMetaResponse`, `OfferSearch*`, `Clinic*`, `Compare*`, `PriceHistory*`, `Admin*`), единые обработчики ошибок (`400`/`401`/`404`/`409`/`422`/`500`), зависимости DI (`get_session_factory`, `get_ingestion_service`, `get_normalization_service`, `require_admin_token` через `hmac.compare_digest`), CORS-настройки, фабрику `create_app()` в `app/main.py` и маршрут `/api/v1/health`.
 
 **Acceptance criteria:**
-- [ ] `GET /api/v1/health` возвращает `200 {"status": "ok", "database": "ok"}`.
-- [ ] Неизвестный маршрут и ошибки валидации возвращают единый формат `{"error": {"code", "message", "details"}}`.
-- [ ] CORS preflight для `http://localhost:5173` возвращает корректный `Access-Control-Allow-Origin`.
+- [x] `GET /api/v1/health` возвращает `200 {"status": "ok", "database": "ok"}`.
+- [x] Неизвестный маршрут и ошибки валидации возвращают единый формат `{"error": {"code", "message", "details"}}`.
+- [x] CORS preflight для `http://localhost:5173` возвращает корректный `Access-Control-Allow-Origin`.
 
 **Verification:**
-- [ ] Tests pass: `make test-api API_PYTEST_ARGS="tests/api/test_health_and_meta.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: проверить `/openapi.json` через `TestClient`/`AsyncClient`
+- [x] Tests pass: `make test-api API_PYTEST_ARGS="tests/api/test_health_and_meta.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: проверить `/openapi.json` через `TestClient`/`AsyncClient`
 
 **Dependencies:** Task 1
 
@@ -58,8 +58,8 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-search-api.md](../S
 ---
 
 ## Checkpoint 1: After Tasks 1–2 (Foundation)
-- [ ] Контейнер `medprice-backend:dev` пересобран с `fastapi` + `uvicorn`
-- [ ] `/api/v1/health`, CORS и единая обработка ошибок работают и протестированы
+- [x] Контейнер `medprice-backend:dev` пересобран с `fastapi` + `uvicorn`
+- [x] `/api/v1/health`, CORS и единая обработка ошибок работают и протестированы
 
 ---
 
