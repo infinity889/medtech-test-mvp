@@ -9,13 +9,13 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-web-ui.md](../SPEC-
 **Description:** Создать каркас `frontend/` с `Containerfile` на базе `docker.io/library/node:22-alpine`, `package.json`, `tsconfig.json` (`strict: true`), `vite.config.ts` (прокси `/api → http://medprice-api:8000` + конфиг Vitest), `eslint.config.js`, `index.html` (`lang="ru"`), `src/styles/app.css` (`@import "tailwindcss"` + `@theme` клинические токены + fix для Leaflet), минимальный `App.tsx`, добавить цели `web-build`, `web-up`, `web-down`, `test-web`, `lint-web`, `typecheck-web`, `build-web` в `Makefile` и собрать образ `medprice-web:dev`.
 
 **Acceptance criteria:**
-- [ ] `make web-build` успешно собирает образ `medprice-web:dev` с установленным `node_modules`.
-- [ ] `make typecheck-web`, `make lint-web` и `make build-web` проходят без ошибок.
-- [ ] Проверены гайды `modern-web-guidance` (dialog, combobox/form, responsive table) внутри контейнера перед реализацией UI-компонентов.
+- [x] `make web-build` успешно собирает образ `medprice-web:dev` с установленным `node_modules`.
+- [x] `make typecheck-web`, `make lint-web` и `make build-web` проходят без ошибок.
+- [x] Проверены гайды `modern-web-guidance` (dialog, combobox/form, responsive table) внутри контейнера перед реализацией UI-компонентов.
 
 **Verification:**
-- [ ] Build succeeds: `make web-build && make build-web`
-- [ ] Lint & types pass: `make lint-web && make typecheck-web`
+- [x] Build succeeds: `make web-build && make build-web`
+- [x] Lint & types pass: `make lint-web && make typecheck-web`
 
 **Dependencies:** None
 

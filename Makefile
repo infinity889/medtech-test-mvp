@@ -1,11 +1,13 @@
 SHELL := /usr/bin/env bash
-.PHONY: net-up db-up db-down backend-build migrate test-ingestion test-normalization test-api test-all lint typecheck ingest seed-catalog normalize api-up api-down api-dev
+.PHONY: net-up db-up db-down backend-build migrate test-ingestion test-normalization test-api test-all lint typecheck ingest seed-catalog normalize api-up api-down api-dev web-build web-up web-down test-web lint-web typecheck-web build-web
 
 NETWORK := medprice-net
 PG_CONTAINER := medprice-pg
 API_CONTAINER := medprice-api
+WEB_CONTAINER := medprice-web
 PG_IMAGE := docker.io/library/postgres:16-alpine
 BACKEND_IMAGE := medprice-backend:dev
+WEB_IMAGE := medprice-web:dev
 
 PG_USER := medprice
 PG_PASSWORD := medprice
@@ -115,3 +117,33 @@ api-dev: db-up
 		-e DATABASE_URL=$(DATABASE_URL) \
 		-p 8000:8000 $(BACKEND_IMAGE) \
 		uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+web-build:
+	podman build -t $(WEB_IMAGE) -f frontend/Containerfile frontend
+
+web-up: net-up
+	@podman rm -f $(WEB_CONTAINER) >/dev/null 2>&1 || true
+	podman run -d --name $(WEB_CONTAINER) --network $(NETWORK) \
+		-v $(CURDIR)/frontend:/workspace/app:Z \
+		-e VITE_API_PROXY_TARGET=http://$(API_CONTAINER):8000 \
+		-p 5173:5173 $(WEB_IMAGE) \
+		vite --host 0.0.0.0 --port 5173
+
+web-down:
+	@podman rm -f $(WEB_CONTAINER) >/dev/null 2>&1 || true
+
+test-web:
+	podman run --rm -v $(CURDIR)/frontend:/workspace/app:Z \
+		$(WEB_IMAGE) vitest run
+
+lint-web:
+	podman run --rm -v $(CURDIR)/frontend:/workspace/app:Z \
+		$(WEB_IMAGE) eslint src
+
+typecheck-web:
+	podman run --rm -v $(CURDIR)/frontend:/workspace/app:Z \
+		$(WEB_IMAGE) tsc --noEmit
+
+build-web:
+	podman run --rm -v $(CURDIR)/frontend:/workspace/app:Z \
+		$(WEB_IMAGE) vite build

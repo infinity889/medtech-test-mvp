@@ -9,3 +9,6 @@ htmlcov/
 *.egg-info/
 .venv/
 .env
+node_modules/
+frontend/dist/
+.vite/

@@ -38,7 +38,7 @@ Task 1 (frontend/ scaffold: Node 22 Containerfile, React 19 + Vite 6 + Tailwind 
 Подробные карточки задач находятся в [tasks/todo.md](./todo.md).
 
 ### Phase 1: Runtime & Core Foundation
-- [ ] Task 1: Создать `frontend/` (Node 22 `Containerfile`, `package.json`, `vite.config.ts`, `tsconfig.json`, `eslint.config.js`, Tailwind v4 `app.css`), добавить цели `web-*` в `Makefile` и собрать образ `medprice-web:dev`
+- [x] Task 1: Создать `frontend/` (Node 22 `Containerfile`, `package.json`, `vite.config.ts`, `tsconfig.json`, `eslint.config.js`, Tailwind v4 `app.css`), добавить цели `web-*` в `Makefile` и собрать образ `medprice-web:dev`
 - [ ] Task 2: Реализовать `api/types.ts`, `api/client.ts`, `utils/format.ts`, `CompareContext`, `StateViews`, `Layout` и `CompareDock` (+ unit-тесты)
 
 ### Checkpoint 1: Frontend Foundation
