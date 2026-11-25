@@ -40,13 +40,13 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-web-ui.md](../SPEC-
 **Description:** Создать строгие TypeScript-контракты `src/api/types.ts` (1:1 с `SPEC-search-api.md`), типизированный `src/api/client.ts` (с `ApiClientError`, поддержкой `AbortSignal` и заголовка `X-Admin-Token`), утилиты форматирования `src/utils/format.ts` (валюта `₸`, относительная и точная дата обновления, дистанция км, срок готовности), `src/context/CompareContext.tsx` (2–5 клиник + `localStorage`), общие `StateViews` (skeleton, empty, error) и каркас `Layout` + `CompareDock`. Написать unit-тесты на `format.ts`, `client.ts` и `CompareContext`.
 
 **Acceptance criteria:**
-- [ ] `ApiClientError` корректно парсит единый формат ошибок `APIError` (`401`/`404`/`409`/`422`/`500`).
-- [ ] `CompareContext` хранит до 5 уникальных клиник, не позволяет добавить 6-ю и сохраняет состояние в `localStorage`.
-- [ ] `formatPriceKzt`, `formatFreshness`, `formatDuration` корректно форматируют казахстанские цены и даты на русском языке.
+- [x] `ApiClientError` корректно парсит единый формат ошибок `APIError` (`401`/`404`/`409`/`422`/`500`).
+- [x] `CompareContext` хранит до 5 уникальных клиник, не позволяет добавить 6-ю и сохраняет состояние в `localStorage`.
+- [x] `formatPriceKzt`, `formatFreshness`, `formatDuration` корректно форматируют казахстанские цены и даты на русском языке.
 
 **Verification:**
-- [ ] Tests pass: `make test-web`
-- [ ] Checks pass: `make lint-web && make typecheck-web`
+- [x] Tests pass: `make test-web`
+- [x] Checks pass: `make lint-web && make typecheck-web`
 
 **Dependencies:** Task 1
 
@@ -66,7 +66,7 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-web-ui.md](../SPEC-
 ---
 
 ## Checkpoint 1: After Tasks 1–2 (Frontend Foundation)
-- [ ] Образ `medprice-web:dev` собран, каркас приложения и unit-тесты зелёные
+- [x] Образ `medprice-web:dev` собран, каркас приложения и unit-тесты зелёные
 
 ---
 
