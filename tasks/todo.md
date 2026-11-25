@@ -174,15 +174,15 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](.
 **Description:** Реализовать фасад `NormalizationService` (полный контракт для `search-api`: `seed_catalog`, `run_normalization`, `list_catalog`, `list_unmatched`, `resolve_unmatched` с добавлением синонима и авто-резолвом совпадающих `pending`-записей, `ignore_unmatched`, `get_price_history`, `refresh_stale_offers`, `close`) и CLI (`seed-catalog`, `run`, `refresh-stale`, `stats`).
 
 **Acceptance criteria:**
-- [ ] `seed_catalog()` идемпотентно загружает `catalog_seed.json` (повторный вызов обновляет без дублей).
-- [ ] `resolve_unmatched(id, service_id, add_as_synonym=True)` переводит запись в `mapped`, создаёт `service_offers` + `price_history`, добавляет `service_name_raw` в синонимы и перематчивает совпадающие `pending`-записи.
-- [ ] `ignore_unmatched(id)` переводит запись в `ignored`, `refresh_stale_offers(30)` деактивирует предложения старше 30 дней, `get_price_history(...)` возвращает хронологический ряд цен.
-- [ ] CLI `python -m app.normalization.cli seed-catalog | run | refresh-stale | stats` работает внутри контейнера и корректно освобождает `Engine`.
+- [x] `seed_catalog()` идемпотентно загружает `catalog_seed.json` (повторный вызов обновляет без дублей).
+- [x] `resolve_unmatched(id, service_id, add_as_synonym=True)` переводит запись в `mapped`, создаёт `service_offers` + `price_history`, добавляет `service_name_raw` в синонимы и перематчивает совпадающие `pending`-записи.
+- [x] `ignore_unmatched(id)` переводит запись в `ignored`, `refresh_stale_offers(30)` деактивирует предложения старше 30 дней, `get_price_history(...)` возвращает хронологический ряд цен.
+- [x] CLI `python -m app.normalization.cli seed-catalog | run | refresh-stale | stats` работает внутри контейнера и корректно освобождает `Engine`.
 
 **Verification:**
-- [ ] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_service.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: проверить `python -m app.normalization.cli stats`
+- [x] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_service.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: проверить `python -m app.normalization.cli stats`
 
 **Dependencies:** Task 6
 
@@ -196,8 +196,8 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](.
 ---
 
 ## Checkpoint 3: After Tasks 6–7 (Pipeline & Public Contract)
-- [ ] Весь движок `normalization` и контракт `NormalizationService` протестированы против реальной PostgreSQL 16
-- [ ] `make test-normalization`, `make test-ingestion`, `make lint`, `make typecheck` проходят чисто
+- [x] Весь движок `normalization` и контракт `NormalizationService` протестированы против реальной PostgreSQL 16
+- [x] `make test-normalization`, `make test-ingestion`, `make lint`, `make typecheck` проходят чисто
 
 ---
 

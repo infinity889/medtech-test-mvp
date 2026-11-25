@@ -54,10 +54,10 @@ Task 1 (rapidfuzz in Containerfile/pyproject + Settings + Makefile)
 
 ### Phase 3: Pipeline, Public Contract & CLI
 - [x] Task 6: Реализовать DTO (`schemas.py`) и `NormalizationPipeline` (клиники, предложения, `price_history`, `unmatched_services`)
-- [ ] Task 7: Реализовать публичный `NormalizationService` (включая `resolve_unmatched`, `ignore_unmatched`, `get_price_history`, `refresh_stale_offers`) и CLI
+- [x] Task 7: Реализовать публичный `NormalizationService` (включая `resolve_unmatched`, `ignore_unmatched`, `get_price_history`, `refresh_stale_offers`) и CLI
 
 ### Checkpoint 3: Pipeline & Service
-- [ ] Интеграционные тесты против PostgreSQL подтверждают 0 дублей при повторе, версионирование `price_history`, обратную связь синонимов и деактивацию > 30 дней
+- [x] Интеграционные тесты против PostgreSQL подтверждают 0 дублей при повторе, версионирование `price_history`, обратную связь синонимов и деактивацию > 30 дней
 
 ### Phase 4: Live Verification on Real KZ Data
 - [ ] Task 8: Прогнать `make seed-catalog && make normalize` на 2 625 реальных raw-записях, проверить межклинические пересечения, идемпотентность, покрытие ≥ 85% и обновить `README.md`
