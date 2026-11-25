@@ -68,14 +68,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](.
 **Description:** Реализовать чистые утилиты предобработки названий услуг (`ё→е`, снятие кавычек/звёздочек/скобок-мусора, сжатие пробелов, снятие типовых префиксов вроде «Кровь.», «Моча.», «Приём врача»), маппинг строкового `category_hint` в `ServiceCategory`, генерацию стабильного `clinic_key` (SHA-256) и конвертацию валют `convert_to_kzt(price, currency, usd_rate)` через `Decimal`.
 
 **Acceptance criteria:**
-- [ ] `normalize_service_text` детерминированно приводит «Общий анализ крови (ОАК)*», «Кровь. Общий анализ» и «Ёмкость...» к чистому нормализованному виду.
-- [ ] `convert_to_kzt` возвращает `Decimal` с точностью `0.01` (`ROUND_HALF_UP`) для `KZT` и `USD`, и отклоняет неподдерживаемые валюты / неположительные цены.
-- [ ] `map_category_hint` корректно маппит русские/английские подсказки в `ServiceCategory` (`lab`, `doctor`, `diagnostics`, `procedure`) или `None`.
+- [x] `normalize_service_text` детерминированно приводит «Общий анализ крови (ОАК)*», «Кровь. Общий анализ» и «Ёмкость...» к чистому нормализованному виду.
+- [x] `convert_to_kzt` возвращает `Decimal` с точностью `0.01` (`ROUND_HALF_UP`) для `KZT` и `USD`, и отклоняет неподдерживаемые валюты / неположительные цены.
+- [x] `map_category_hint` корректно маппит русские/английские подсказки в `ServiceCategory` (`lab`, `doctor`, `diagnostics`, `procedure`) или `None`.
 
 **Verification:**
-- [ ] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_text_and_currency.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: убедиться, что везде используется `Decimal`, без `float` для денег
+- [x] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_text_and_currency.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: убедиться, что везде используется `Decimal`, без `float` для денег
 
 **Dependencies:** Task 2
 

@@ -45,7 +45,7 @@ Task 1 (rapidfuzz in Containerfile/pyproject + Settings + Makefile)
 - [x] Образ `medprice-backend:dev` пересобран с `rapidfuzz`, миграция `0002` обратима, существующие 48 тестов `ingestion` зелёные
 
 ### Phase 2: Dictionary & Matching Engine
-- [ ] Task 3: Реализовать нормализацию текста и конвертацию валют `KZT`/`USD → KZT` (`text_utils.py`)
+- [x] Task 3: Реализовать нормализацию текста и конвертацию валют `KZT`/`USD → KZT` (`text_utils.py`)
 - [ ] Task 4: Сформировать курируемый справочник `catalog_seed.json` (65–80 услуг по 4 категориям на базе реальных данных РК)
 - [ ] Task 5: Реализовать детерминированный `ServiceMatcher` (`exact` → `synonym` → `RapidFuzz`)
 
