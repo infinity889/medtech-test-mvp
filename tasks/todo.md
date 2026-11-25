@@ -96,15 +96,15 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-search-api.md](../S
 **Description:** Реализовать список клиник (с фильтром `has_geo=true` для карты Leaflet), карточку клиники со всеми активными услугами ≤ 30 дней и ссылками маршрутов 2GIS/Google Maps, матрицу табличного сравнения 2–5 клиник (`GET /api/v1/compare` с определением `cheapest_clinic_id`) и историю изменения цен (`GET /api/v1/services/{service_id}/price-history`).
 
 **Acceptance criteria:**
-- [ ] `GET /api/v1/clinics?has_geo=true` возвращает только клиники с непустыми `latitude` и `longitude`.
-- [ ] `GET /api/v1/clinics/{clinic_id}` возвращает контакты, график работы, ссылки маршрутов и только актуальные (≤ 30 дней) услуги; несуществующий UUID → `404 NOT_FOUND`.
-- [ ] `GET /api/v1/compare` сравнивает 2–5 клиник, корректно отмечает `cheapest_clinic_id` в каждой строке и возвращает `422` при `< 2` или `> 5` клиниках.
-- [ ] `GET /api/v1/services/{service_id}/price-history` возвращает хронологические точки цен с `clinic_name` и `city`.
+- [x] `GET /api/v1/clinics?has_geo=true` возвращает только клиники с непустыми `latitude` и `longitude`.
+- [x] `GET /api/v1/clinics/{clinic_id}` возвращает контакты, график работы, ссылки маршрутов и только актуальные (≤ 30 дней) услуги; несуществующий UUID → `404 NOT_FOUND`.
+- [x] `GET /api/v1/compare` сравнивает 2–5 клиник, корректно отмечает `cheapest_clinic_id` в каждой строке и возвращает `422` при `< 2` или `> 5` клиниках.
+- [x] `GET /api/v1/services/{service_id}/price-history` возвращает хронологические точки цен с `clinic_name` и `city`.
 
 **Verification:**
-- [ ] Tests pass: `make test-api API_PYTEST_ARGS="tests/api/test_clinics_and_compare.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: проверить генерацию ссылок 2GIS и Google Maps как по GPS, так и по адресу-фоллбэку
+- [x] Tests pass: `make test-api API_PYTEST_ARGS="tests/api/test_clinics_and_compare.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: проверить генерацию ссылок 2GIS и Google Maps как по GPS, так и по адресу-фоллбэку
 
 **Dependencies:** Task 3
 
@@ -120,8 +120,8 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-search-api.md](../S
 ---
 
 ## Checkpoint 2: After Tasks 3–4 (Public Patient API)
-- [ ] Все публичные пациентские маршруты (`/health`, `/meta/filters`, `/services/autocomplete`, `/offers`, `/clinics`, `/clinics/{id}`, `/compare`, `/price-history`) работают и протестированы
-- [ ] `ruff` и `mypy --strict` чистые
+- [x] Все публичные пациентские маршруты (`/health`, `/meta/filters`, `/services/autocomplete`, `/offers`, `/clinics`, `/clinics/{id}`, `/compare`, `/price-history`) работают и протестированы
+- [x] `ruff` и `mypy --strict` чистые
 
 ---
 

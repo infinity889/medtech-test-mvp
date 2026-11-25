@@ -13,6 +13,7 @@ from sqlalchemy import Engine
 
 from app.api.errors import register_error_handlers
 from app.api.query_service import SearchQueryService
+from app.api.routes import clinics as clinics_routes
 from app.api.routes import health as health_routes
 from app.api.routes import offers as offers_routes
 from app.api.routes import services as services_routes
@@ -99,6 +100,8 @@ def create_app(
     api_v1.include_router(health_routes.router)
     api_v1.include_router(services_routes.router)
     api_v1.include_router(offers_routes.router)
+    api_v1.include_router(clinics_routes.router)
+    api_v1.include_router(clinics_routes.compare_router)
     application.include_router(api_v1)
 
     return application

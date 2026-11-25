@@ -9,26 +9,36 @@ from decimal import ROUND_HALF_UP, Decimal
 from urllib.parse import quote
 
 from fastapi import status
-from sqlalchemy import func, select
+from sqlalchemy import asc, func, select
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.api.errors import APIError
 from app.api.schemas import (
     CategoryFilterMeta,
     CityFilterMeta,
+    ClinicDetail,
+    ClinicListItem,
+    ClinicListResponse,
+    ClinicOfferItem,
     ClinicSummary,
+    CompareCell,
+    CompareMatrixResponse,
+    CompareRow,
     FiltersMetaResponse,
     OfferSearchItem,
     OfferSearchResponse,
     OfferSearchSummary,
     OfferSortBy,
     PaginationMeta,
+    PriceHistoryPointItem,
+    PriceHistoryResponse,
     ServiceAutocompleteItem,
     ServiceAutocompleteResponse,
 )
 from app.core.config import Settings
 from app.normalization.models import (
     Clinic,
+    PriceHistory,
     ServiceCatalog,
     ServiceCategory,
     ServiceOffer,
@@ -473,4 +483,320 @@ class SearchQueryService:
                 page_size=page_size,
                 total_items=total_items,
             ),
+        )
+
+    def list_clinics(
+        self,
+        *,
+        city: str | None = None,
+        q: str | None = None,
+        min_rating: float | None = None,
+        online_booking: bool | None = None,
+        has_geo: bool | None = None,
+        page: int = 1,
+        page_size: int = 50,
+    ) -> ClinicListResponse:
+        """List deduplicated clinics with active fresh offer counts and route links."""
+        cutoff = self._freshness_cutoff()
+        norm_q = normalize_service_text(q) if q and q.strip() else ""
+
+        with self._session_factory() as session:
+            stmt = select(Clinic)
+            if city is not None and city.strip():
+                stmt = stmt.where(func.lower(Clinic.city) == city.strip().lower())
+            if min_rating is not None:
+                stmt = stmt.where(Clinic.rating.is_not(None), Clinic.rating >= min_rating)
+            if online_booking is not None:
+                stmt = stmt.where(Clinic.has_online_booking.is_(online_booking))
+            if has_geo is True:
+                stmt = stmt.where(Clinic.latitude.is_not(None), Clinic.longitude.is_not(None))
+            elif has_geo is False:
+                stmt = stmt.where(Clinic.latitude.is_(None) | Clinic.longitude.is_(None))
+
+            clinics = list(session.scalars(stmt))
+
+            if norm_q:
+                clinics = [
+                    clinic
+                    for clinic in clinics
+                    if norm_q in normalize_service_text(clinic.clinic_name)
+                    or (clinic.address and norm_q in normalize_service_text(clinic.address))
+                ]
+
+            clinic_ids = [c.id for c in clinics]
+            stats_map: dict[uuid.UUID, tuple[int, Decimal | None]] = {}
+            if clinic_ids:
+                stats_rows = session.execute(
+                    select(
+                        ServiceOffer.clinic_id,
+                        func.count(ServiceOffer.id),
+                        func.min(ServiceOffer.price_kzt),
+                    )
+                    .where(
+                        ServiceOffer.clinic_id.in_(clinic_ids),
+                        ServiceOffer.is_active.is_(True),
+                        ServiceOffer.parsed_at >= cutoff,
+                    )
+                    .group_by(ServiceOffer.clinic_id)
+                ).all()
+                stats_map = {row[0]: (int(row[1]), row[2]) for row in stats_rows}
+
+        enriched = [
+            (
+                clinic,
+                stats_map.get(clinic.id, (0, None))[0],
+                stats_map.get(clinic.id, (0, None))[1],
+            )
+            for clinic in clinics
+        ]
+        enriched.sort(
+            key=lambda item: (
+                -item[1],
+                item[0].rating is None,
+                -(item[0].rating if item[0].rating is not None else 0.0),
+                item[0].clinic_name.lower(),
+            )
+        )
+
+        total_items = len(enriched)
+        start = (page - 1) * page_size
+        page_slice = enriched[start : start + page_size]
+
+        items = [
+            ClinicListItem(
+                id=clinic.id,
+                source_id=clinic.source_id,
+                clinic_name=clinic.clinic_name,
+                city=clinic.city,
+                address=clinic.address,
+                phone=clinic.phone,
+                working_hours=clinic.working_hours,
+                latitude=clinic.latitude,
+                longitude=clinic.longitude,
+                rating=clinic.rating,
+                has_online_booking=clinic.has_online_booking,
+                website_url=clinic.website_url,
+                offers_count=offers_count,
+                min_price_kzt=min_price,
+                route_2gis_url=build_2gis_url(clinic),
+                route_google_maps_url=build_google_maps_url(clinic),
+            )
+            for clinic, offers_count, min_price in page_slice
+        ]
+        return ClinicListResponse(
+            items=items,
+            pagination=PaginationMeta.build(
+                page=page,
+                page_size=page_size,
+                total_items=total_items,
+            ),
+        )
+
+    def get_clinic_detail(self, clinic_id: uuid.UUID) -> ClinicDetail:
+        """Return clinic profile and all active fresh (<= 30 days) offers."""
+        cutoff = self._freshness_cutoff()
+        with self._session_factory() as session:
+            clinic = session.get(Clinic, clinic_id)
+            if clinic is None:
+                raise APIError(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    code="NOT_FOUND",
+                    message=f"Clinic not found: {clinic_id}",
+                )
+
+            rows = session.execute(
+                select(ServiceOffer, ServiceCatalog)
+                .join(ServiceCatalog, ServiceCatalog.id == ServiceOffer.service_id)
+                .where(
+                    ServiceOffer.clinic_id == clinic_id,
+                    ServiceOffer.is_active.is_(True),
+                    ServiceOffer.parsed_at >= cutoff,
+                    ServiceCatalog.is_active.is_(True),
+                )
+                .order_by(
+                    asc(ServiceOffer.category),
+                    asc(ServiceOffer.price_kzt),
+                    asc(ServiceCatalog.canonical_name),
+                )
+            ).all()
+
+        offers = [
+            ClinicOfferItem(
+                offer_id=offer.id,
+                service_id=offer.service_id,
+                service_code=catalog.code,
+                canonical_name=catalog.canonical_name,
+                service_name_raw=offer.service_name_raw,
+                category=offer.category,
+                price_kzt=offer.price_kzt,
+                duration_days=offer.duration_days,
+                parsed_at=offer.parsed_at,
+                source_url=offer.source_url,
+            )
+            for offer, catalog in rows
+        ]
+        return ClinicDetail(
+            id=clinic.id,
+            source_id=clinic.source_id,
+            clinic_name=clinic.clinic_name,
+            city=clinic.city,
+            address=clinic.address,
+            phone=clinic.phone,
+            working_hours=clinic.working_hours,
+            latitude=clinic.latitude,
+            longitude=clinic.longitude,
+            rating=clinic.rating,
+            has_online_booking=clinic.has_online_booking,
+            website_url=clinic.website_url,
+            updated_at=clinic.updated_at,
+            route_2gis_url=build_2gis_url(clinic),
+            route_google_maps_url=build_google_maps_url(clinic),
+            offers=offers,
+        )
+
+    def compare_clinics(
+        self,
+        *,
+        clinic_ids: list[uuid.UUID],
+        service_ids: list[uuid.UUID] | None = None,
+        category: ServiceCategory | None = None,
+    ) -> CompareMatrixResponse:
+        """Build a side-by-side price comparison matrix for 2..5 clinics."""
+        if len(clinic_ids) < 2 or len(clinic_ids) > 5:
+            raise APIError(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                code="VALIDATION_ERROR",
+                message="Between 2 and 5 unique clinic_ids are required for comparison",
+            )
+
+        cutoff = self._freshness_cutoff()
+        with self._session_factory() as session:
+            found_clinics = {
+                c.id: c
+                for c in session.scalars(select(Clinic).where(Clinic.id.in_(clinic_ids)))
+            }
+            missing_ids = [str(cid) for cid in clinic_ids if cid not in found_clinics]
+            if missing_ids:
+                raise APIError(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    code="NOT_FOUND",
+                    message=f"Clinic(s) not found: {', '.join(missing_ids)}",
+                )
+
+            ordered_clinics = [found_clinics[cid] for cid in clinic_ids]
+
+            offer_stmt = (
+                select(ServiceOffer, ServiceCatalog)
+                .join(ServiceCatalog, ServiceCatalog.id == ServiceOffer.service_id)
+                .where(
+                    ServiceOffer.clinic_id.in_(clinic_ids),
+                    ServiceOffer.is_active.is_(True),
+                    ServiceOffer.parsed_at >= cutoff,
+                    ServiceCatalog.is_active.is_(True),
+                )
+            )
+            if service_ids:
+                offer_stmt = offer_stmt.where(ServiceOffer.service_id.in_(service_ids))
+            if category is not None:
+                offer_stmt = offer_stmt.where(ServiceOffer.category == category)
+
+            offer_rows = list(session.execute(offer_stmt).all())
+
+        services_by_id: dict[uuid.UUID, ServiceCatalog] = {}
+        cells_by_service: dict[uuid.UUID, dict[uuid.UUID, ServiceOffer]] = {}
+        for offer, catalog in offer_rows:
+            services_by_id[catalog.id] = catalog
+            cells_by_service.setdefault(catalog.id, {})[offer.clinic_id] = offer
+
+        compare_rows: list[tuple[int, str, CompareRow]] = []
+        for svc_id, catalog in services_by_id.items():
+            svc_offers = cells_by_service[svc_id]
+            cells: dict[str, CompareCell | None] = {}
+            cheapest_id: uuid.UUID | None = None
+            cheapest_price: Decimal | None = None
+            covered_count = 0
+
+            for cid in clinic_ids:
+                cell_offer = svc_offers.get(cid)
+                if cell_offer is None:
+                    cells[str(cid)] = None
+                else:
+                    covered_count += 1
+                    cells[str(cid)] = CompareCell(
+                        offer_id=cell_offer.id,
+                        price_kzt=cell_offer.price_kzt,
+                        duration_days=cell_offer.duration_days,
+                        parsed_at=cell_offer.parsed_at,
+                        source_url=cell_offer.source_url,
+                    )
+                    if cheapest_price is None or cell_offer.price_kzt < cheapest_price:
+                        cheapest_price = cell_offer.price_kzt
+                        cheapest_id = cid
+
+            row_obj = CompareRow(
+                service_id=catalog.id,
+                service_code=catalog.code,
+                canonical_name=catalog.canonical_name,
+                category=catalog.category,
+                cheapest_clinic_id=cheapest_id,
+                cells=cells,
+            )
+            compare_rows.append((-covered_count, catalog.canonical_name.lower(), row_obj))
+
+        compare_rows.sort(key=lambda entry: (entry[0], entry[1]))
+        return CompareMatrixResponse(
+            clinics=[to_clinic_summary(clinic) for clinic in ordered_clinics],
+            rows=[entry[2] for entry in compare_rows],
+        )
+
+    def get_price_history(
+        self,
+        *,
+        service_id: uuid.UUID,
+        clinic_id: uuid.UUID | None = None,
+        city: str | None = None,
+        days: int = 90,
+    ) -> PriceHistoryResponse:
+        """Return chronological price history points for a canonical service."""
+        cutoff = datetime.now(UTC) - timedelta(days=days)
+        with self._session_factory() as session:
+            catalog = session.get(ServiceCatalog, service_id)
+            if catalog is None:
+                raise APIError(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    code="NOT_FOUND",
+                    message=f"Service not found: {service_id}",
+                )
+
+            stmt = (
+                select(PriceHistory, Clinic)
+                .join(Clinic, Clinic.id == PriceHistory.clinic_id)
+                .where(
+                    PriceHistory.service_id == service_id,
+                    PriceHistory.recorded_at >= cutoff,
+                )
+                .order_by(asc(PriceHistory.recorded_at), asc(PriceHistory.id))
+            )
+            if clinic_id is not None:
+                stmt = stmt.where(PriceHistory.clinic_id == clinic_id)
+            if city is not None and city.strip():
+                stmt = stmt.where(func.lower(Clinic.city) == city.strip().lower())
+
+            rows = list(session.execute(stmt).all())
+
+        points = [
+            PriceHistoryPointItem(
+                recorded_at=point.recorded_at,
+                price_kzt=point.price_kzt,
+                clinic_id=clinic.id,
+                clinic_name=clinic.clinic_name,
+                city=clinic.city,
+            )
+            for point, clinic in rows
+        ]
+        return PriceHistoryResponse(
+            service_id=catalog.id,
+            service_code=catalog.code,
+            canonical_name=catalog.canonical_name,
+            points=points,
         )

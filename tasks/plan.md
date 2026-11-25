@@ -43,10 +43,10 @@ Task 1 (fastapi + uvicorn in pyproject/container, API Settings, Makefile targets
 
 ### Phase 2: Patient Search, Clinics, Compare & Price History
 - [x] Task 3: Реализовать `query_service.py` и маршруты `/meta/filters`, `/services/autocomplete`, `/offers` (все фильтры, сортировки, Haversine, свежесть ≤ 30 дней)
-- [ ] Task 4: Реализовать маршруты `/clinics`, `/clinics/{clinic_id}`, `/compare` (2–5 клиник) и `/services/{service_id}/price-history`
+- [x] Task 4: Реализовать маршруты `/clinics`, `/clinics/{clinic_id}`, `/compare` (2–5 клиник) и `/services/{service_id}/price-history`
 
 ### Checkpoint 2: Public API
-- [ ] Все пациентские эндпоинты протестированы против PostgreSQL (`medprice_test`), включая правило 30 дней, Haversine и сравнение 2–5 клиник
+- [x] Все пациентские эндпоинты протестированы против PostgreSQL (`medprice_test`), включая правило 30 дней, Haversine и сравнение 2–5 клиник
 
 ### Phase 3: Admin API & Live Verification
 - [ ] Task 5: Реализовать защищённые `X-Admin-Token` маршруты `/api/v1/admin/*` (sources, runs, errors, stats, unmatched resolve/ignore, scrape-runs с `409` lock)
