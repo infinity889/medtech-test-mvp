@@ -148,15 +148,15 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](.
 **Description:** Создать Pydantic v2 DTO (`ServiceCatalogDTO`, `ClinicDTO`, `ServiceOfferDTO`, `UnmatchedServiceDTO`, `PriceHistoryPointDTO`, `SeedSummary`, `NormalizationSummary`) и оркестратор `NormalizationPipeline`, читающий батчи из `IngestionService.iter_raw_records(...)`, дедуплицирующий `clinics`, выполняющий upsert `service_offers` (с выбором свежайшей/минимальной цены при коллизии `(clinic_id, service_id)`), фиксирующий изменения в `price_history` и отправляющий нераспознанные строки в `unmatched_services`.
 
 **Acceptance criteria:**
-- [ ] Прогон пайплайна на raw-данных создаёт `clinics`, `service_offers`, начальные точки `price_history` и записи `unmatched_services`.
-- [ ] Повторный прогон на тех же raw-данных идемпотентен: 0 дублей в `clinics`, `service_offers`, `price_history` и `unmatched_services`.
-- [ ] Появление новой цены в raw-слое обновляет `service_offers.price_kzt` и добавляет новую запись в `price_history`.
-- [ ] Предложение с `parsed_at` старше 30 дней сохраняется с `is_active = False`.
+- [x] Прогон пайплайна на raw-данных создаёт `clinics`, `service_offers`, начальные точки `price_history` и записи `unmatched_services`.
+- [x] Повторный прогон на тех же raw-данных идемпотентен: 0 дублей в `clinics`, `service_offers`, `price_history` и `unmatched_services`.
+- [x] Появление новой цены в raw-слое обновляет `service_offers.price_kzt` и добавляет новую запись в `price_history`.
+- [x] Предложение с `parsed_at` старше 30 дней сохраняется с `is_active = False`.
 
 **Verification:**
-- [ ] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_pipeline.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: проверить, что `NormalizationPipeline` не делает ни одной записи в таблицы `ingestion`
+- [x] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_pipeline.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: проверить, что `NormalizationPipeline` не делает ни одной записи в таблицы `ingestion`
 
 **Dependencies:** Task 5
 

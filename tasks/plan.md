@@ -53,7 +53,7 @@ Task 1 (rapidfuzz in Containerfile/pyproject + Settings + Makefile)
 - [x] Справочник ≥ 50 позиций и матчер (включая кейс `ОАК`/`CBC` и категорийную изоляцию) покрыты юнит-тестами, `ruff` и `mypy` чистые
 
 ### Phase 3: Pipeline, Public Contract & CLI
-- [ ] Task 6: Реализовать DTO (`schemas.py`) и `NormalizationPipeline` (клиники, предложения, `price_history`, `unmatched_services`)
+- [x] Task 6: Реализовать DTO (`schemas.py`) и `NormalizationPipeline` (клиники, предложения, `price_history`, `unmatched_services`)
 - [ ] Task 7: Реализовать публичный `NormalizationService` (включая `resolve_unmatched`, `ignore_unmatched`, `get_price_history`, `refresh_stale_offers`) и CLI
 
 ### Checkpoint 3: Pipeline & Service
