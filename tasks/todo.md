@@ -35,14 +35,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](.
 **Description:** Создать SQLAlchemy 2.0 ORM-модели (`ServiceCatalog`, `Clinic`, `ServiceOffer`, `PriceHistory`, `UnmatchedService`) и enum-типы (`ServiceCategory`, `CurrencyCode`, `MatchMethod`, `UnmatchedStatus`), подключить модели в `alembic/env.py` и написать обратимую миграцию `0002_normalization_layer.py` со всеми индексами, FK и `UNIQUE (clinic_id, service_id)`.
 
 **Acceptance criteria:**
-- [ ] Миграция `0002_normalization_layer.py` создаёт 5 таблиц (`service_catalog`, `clinics`, `service_offers`, `price_history`, `unmatched_services`) со всеми полями, FK, индексами и уникальными ограничениями из `SPEC-normalization.md`.
-- [ ] Миграция обратима (`alembic upgrade head` → `alembic downgrade 0001_ingestion_raw_layer` → `alembic upgrade head`) без потери таблиц `ingestion`.
-- [ ] Интеграционный тест проверяет создание таблиц, `UNIQUE (clinic_id, service_id)` и `UNIQUE (raw_record_id)` в `unmatched_services`.
+- [x] Миграция `0002_normalization_layer.py` создаёт 5 таблиц (`service_catalog`, `clinics`, `service_offers`, `price_history`, `unmatched_services`) со всеми полями, FK, индексами и уникальными ограничениями из `SPEC-normalization.md`.
+- [x] Миграция обратима (`alembic upgrade head` → `alembic downgrade 0001_ingestion_raw_layer` → `alembic upgrade head`) без потери таблиц `ingestion`.
+- [x] Интеграционный тест проверяет создание таблиц, `UNIQUE (clinic_id, service_id)` и `UNIQUE (raw_record_id)` в `unmatched_services`.
 
 **Verification:**
-- [ ] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_models.py"`
-- [ ] Build succeeds: `make migrate && make lint && make typecheck`
-- [ ] Manual check: проверить обратимость `0002 → 0001 → 0002` на `medprice_test` и `\dt` в `medprice`
+- [x] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_models.py"`
+- [x] Build succeeds: `make migrate && make lint && make typecheck`
+- [x] Manual check: проверить обратимость `0002 → 0001 → 0002` на `medprice_test` и `\dt` в `medprice`
 
 **Dependencies:** Task 1
 
@@ -57,9 +57,9 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](.
 ---
 
 ## Checkpoint 1: After Tasks 1–2 (Foundation)
-- [ ] Контейнер `medprice-backend:dev` пересобран с `rapidfuzz`
-- [ ] Миграция `0002_normalization_layer` применена и проверена на обратимость
-- [ ] Существующие 48 тестов `ingestion` и новые тесты моделей `normalization` проходят чисто
+- [x] Контейнер `medprice-backend:dev` пересобран с `rapidfuzz`
+- [x] Миграция `0002_normalization_layer` применена и проверена на обратимость
+- [x] Существующие 48 тестов `ingestion` и новые тесты моделей `normalization` проходят чисто
 
 ---
 

@@ -39,10 +39,10 @@ Task 1 (rapidfuzz in Containerfile/pyproject + Settings + Makefile)
 
 ### Phase 1: Foundation
 - [x] Task 1: Добавить `rapidfuzz`, настройки нормализации в `Settings`, цели в `Makefile` и пересобрать контейнер
-- [ ] Task 2: Реализовать ORM-модели слоя `normalization` и обратимую миграцию Alembic `0002`
+- [x] Task 2: Реализовать ORM-модели слоя `normalization` и обратимую миграцию Alembic `0002`
 
 ### Checkpoint 1: Foundation
-- [ ] Образ `medprice-backend:dev` пересобран с `rapidfuzz`, миграция `0002` обратима, существующие 48 тестов `ingestion` зелёные
+- [x] Образ `medprice-backend:dev` пересобран с `rapidfuzz`, миграция `0002` обратима, существующие 48 тестов `ingestion` зелёные
 
 ### Phase 2: Dictionary & Matching Engine
 - [ ] Task 3: Реализовать нормализацию текста и конвертацию валют `KZT`/`USD → KZT` (`text_utils.py`)

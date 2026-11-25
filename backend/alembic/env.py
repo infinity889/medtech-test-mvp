@@ -8,6 +8,7 @@ from sqlalchemy import engine_from_config, pool
 from app.core.config import Settings
 from app.core.db import Base
 from app.ingestion import models as _ingestion_models  # noqa: F401
+from app.normalization import models as _normalization_models  # noqa: F401
 
 config = context.config
 
