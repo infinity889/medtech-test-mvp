@@ -1,95 +1,81 @@
-# Implementation Plan: Ingestion (`ingestion`) — V1
+# Implementation Plan: Normalization (`normalization`) — V1
 
-Source spec: [SPEC-ingestion.md](../SPEC-ingestion.md)
+Source spec: [SPEC-normalization.md](../SPEC-normalization.md)
 
 ## Overview
 
-Реализуем модуль `ingestion` — отказоустойчивую подсистему сбора публичных прайс-листов клиник и лабораторий Казахстана с хранением в отдельном raw-слое PostgreSQL 16 (ретеншн ≥ 90 дней), идемпотентной дедупликацией, соблюдением `robots.txt` и задержек, переиспользуемыми экстракторами (HTML, PDF, DOCX, Excel), планировщиком/CLI и минимум 3 живыми адаптерами источников. Вся разработка и запуск выполняются в контейнере Python 3.12 через `podman`.
+Реализуем модуль `normalization` — детерминированный пайплайн приведения сырых записей из `raw_service_records` (через контракт `IngestionService.iter_raw_records`) к единой витрине медицинских услуг Казахстана: справочник ≥ 50 (целевой объём 65–80) канонических услуг по 4 категориям, `RapidFuzz`-матчинг с категорийной изоляцией, конвертация валют `USD → KZT` через `Decimal`, дедуплицированные таблицы `clinics` и `service_offers`, история цен `price_history`, очередь ручной разметки `unmatched_services` с пополнением синонимов и правило свежести ≤ 30 дней.
 
 ## Architecture Decisions
 
-1. **Контейнерная инфраструктура без `podman compose`**: на хосте установлен `podman 6.1.3` без `podman-compose`, поэтому поднимаем общую сеть `medprice-net` и контейнеры `medprice-pg` (`postgres:16-alpine`) + `medprice-backend:dev` (`python:3.12-slim`) через воспроизводимый `Makefile`.
-2. **Идемпотентная дедупликация с сохранением истории цен**: `raw_service_records` использует `UNIQUE (source_id, record_fingerprint)` (SHA-256 от канонических полей клиники, услуги и цены). Повторный прогон при неизменной цене делает `UPSERT` (обновляет `last_seen_at`, `parsed_at`, `last_run_id` без дублей), а изменение цены создаёт новую raw-запись, сохраняя прежнюю на ≥ 90 дней для аудита и истории цен.
-3. **Изоляция адаптеров от БД**: адаптеры наследуют `BaseSourceAdapter` и отдают `AsyncIterator[RawServiceInput]`. Они никогда не работают с SQLAlchemy напрямую — валидацией, дедупликацией, транзакциями и записью `scrape_errors` управляет `IngestionRunner`.
-4. **Строгое соблюдение `robots.txt` и TLS**: `PoliteHttpClient` кэширует `robots.txt` на домен, соблюдает `min_delay_sec >= 1.5` + jitter с семафором `concurrency=1` на домен и не отключает проверку SSL.
-5. **Офлайн-тестируемость**: все юнит-, экстракторные и контрактные тесты адаптеров работают полностью офлайн (`respx` + сохранённые фикстуры HTML/JSON/PDF/DOCX/XLSX) и не зависят от доступности внешних сайтов в CI; живой прогон вынесен в финальную задачу верификации.
+1. **Строгая односторонняя зависимость (`normalization → ingestion`)**: `NormalizationPipeline` читает сырые данные исключительно через `IngestionService.iter_raw_records(...)` и никогда не изменяет таблицы raw-слоя.
+2. **Категорийная изоляция матчинга**: при наличии `category_hint` (`лаборатория`, `приём врача`, `диагностика`, `процедура`) `RapidFuzz` сопоставляет только в рамках соответствующей категории `ServiceCategory`, исключая ложные склейки между анализами и приёмами врачей.
+3. **Уникальность предложения `UNIQUE (clinic_id, service_id)`**: одна актуальная запись на пару `(клиника, услуга)`; если в одном сыром прайсе несколько вариантов одной услуги в той же клинике, выбирается более свежая запись (`parsed_at`), а при равной свежести — минимальная `price_kzt` (аналогично Aviasales).
+4. **Безубыточная история цен (`price_history`)**: снимок добавляется только при первом появлении пары `(clinic_id, service_id)` и при реальном изменении `price_kzt` относительно последней точки — повторный запуск `make normalize` даёт 0 дублей.
+5. **Обратная связь ручной разметки**: `resolve_unmatched(..., add_as_synonym=True)` не только создаёт `service_offers` для выбранной записи, но и добавляет `service_name_raw` в `service_catalog.synonyms` и автоматически резолвит все совпадающие `pending`-записи с тем же `service_name_raw`.
 
 ## Dependency Graph
 
 ```text
-Task 1 (Podman Python 3.12 + PG 16 + scaffold)
+Task 1 (rapidfuzz in Containerfile/pyproject + Settings + Makefile)
    │
-   └── Task 2 (Config, DB engine, Raw ORM models + Alembic migration)
+   └── Task 2 (Normalization ORM models + Alembic 0002 migration + schema tests)
           │
-          ├── Task 3 (PoliteHttpClient: robots.txt, rate limit, retry)
-          ├── Task 4 (Extractors: HTML + PDF)
-          └── Task 5 (Extractors: DOCX + Excel)
+          ├── Task 3 (text_utils: text normalization + USD→KZT Decimal converter)
+          └── Task 4 (catalog_seed.json: 65–80 services from real KZ raw data)
                  │
-                 └── Task 6 (DTOs, BaseSourceAdapter, Registry, IngestionRunner)
+                 └── Task 5 (ServiceMatcher: exact → synonym → category-isolated RapidFuzz)
                         │
-                        └── Task 7 (IngestionService contract, Scheduler, CLI, 90d purge)
+                        └── Task 6 (DTOs + NormalizationPipeline: clinics, offers, price_history, unmatched)
                                │
-                               ├── Task 8 (Live Adapter #1: kdlolymp.kz)
-                               ├── Task 9 (Live Adapter #2: invivo.kz*)
-                               └── Task 10 (Live Adapter #3: doq.kz*)
+                               └── Task 7 (NormalizationService contract + CLI + synonym feedback loop + 30d stale)
                                       │
-                                      └── Task 11 (Live E2E smoke run & full verification)
+                                      └── Task 8 (Live run on 2,625 real records, cross-clinic verification & README)
 ```
-
-*\*Состав адаптеров #2 и #3 зависит от подтверждения замены `invitro.kz` / `helix.kz` в Open Questions.*
 
 ## Task List
 
 Подробные карточки задач (описание, критерии приёмки, команды проверки, файлы, размер) находятся в [tasks/todo.md](./todo.md).
 
 ### Phase 1: Foundation
-- [x] Task 1: Подготовить `podman`-окружение (Python 3.12 + PostgreSQL 16), `pyproject.toml` и `Makefile`
-- [x] Task 2: Реализовать конфиг, подключение БД, ORM-модели raw-слоя и начальную миграцию Alembic
+- [ ] Task 1: Добавить `rapidfuzz`, настройки нормализации в `Settings`, цели в `Makefile` и пересобрать контейнер
+- [ ] Task 2: Реализовать ORM-модели слоя `normalization` и обратимую миграцию Alembic `0002`
 
 ### Checkpoint 1: Foundation
-- [x] Контейнеры собираются и стартуют, `alembic upgrade head` проходит чисто, `pytest` запускается внутри контейнера
+- [ ] Образ `medprice-backend:dev` пересобран с `rapidfuzz`, миграция `0002` обратима, существующие 48 тестов `ingestion` зелёные
 
-### Phase 2: Politeness & Document Extractors
-- [x] Task 3: Реализовать `PoliteHttpClient` (`robots.txt`, per-domain rate limit, ретраи) и офлайн-тесты
-- [x] Task 4: Реализовать HTML и PDF экстракторы прайс-листов с тестами на фикстурах
-- [x] Task 5: Реализовать DOCX и Excel экстракторы прайс-листов с тестами на фикстурах
+### Phase 2: Dictionary & Matching Engine
+- [ ] Task 3: Реализовать нормализацию текста и конвертацию валют `KZT`/`USD → KZT` (`text_utils.py`)
+- [ ] Task 4: Сформировать курируемый справочник `catalog_seed.json` (65–80 услуг по 4 категориям на базе реальных данных РК)
+- [ ] Task 5: Реализовать детерминированный `ServiceMatcher` (`exact` → `synonym` → `RapidFuzz`)
 
-### Checkpoint 2: Politeness & Extractors
-- [x] Все тесты HTTP-клиента и 4 экстракторов проходят, `ruff` и `mypy` без ошибок
+### Checkpoint 2: Dictionary & Matching Engine
+- [ ] Справочник ≥ 50 позиций и матчер (включая кейс `ОАК`/`CBC` и категорийную изоляцию) покрыты юнит-тестами, `ruff` и `mypy` чистые
 
-### Phase 3: Ingestion Core & Provider Contract
-- [x] Task 6: Реализовать `RawServiceInput`, `BaseSourceAdapter`, `AdapterRegistry` и `IngestionRunner` (дедупликация + изоляция ошибок)
-- [x] Task 7: Реализовать публичный `IngestionService`, `scheduler.py`, `cli.py` и очистку старше 90 дней
+### Phase 3: Pipeline, Public Contract & CLI
+- [ ] Task 6: Реализовать DTO (`schemas.py`) и `NormalizationPipeline` (клиники, предложения, `price_history`, `unmatched_services`)
+- [ ] Task 7: Реализовать публичный `NormalizationService` (включая `resolve_unmatched`, `ignore_unmatched`, `get_price_history`, `refresh_stale_offers`) и CLI
 
-### Checkpoint 3: Ingestion Core
-- [x] Повторный запуск на фикстурном адаптере даёт 0 дублей, падение одного адаптера не останавливает второй, `purge_expired_raw_records` защищён порогом ≥ 90 дней
+### Checkpoint 3: Pipeline & Service
+- [ ] Интеграционные тесты против PostgreSQL подтверждают 0 дублей при повторе, версионирование `price_history`, обратную связь синонимов и деактивацию > 30 дней
 
-### Phase 4: Real KZ Source Adapters & Live Verification
-- [x] Task 8: Реализовать адаптер #1 — `kdlolymp.kz` (КДЛ Олимп) с фикстурными тестами
-- [x] Task 9: Реализовать адаптер #2 — `invivo.kz` (Лаборатория INVIVO) с фикстурными тестами
-- [x] Task 10: Реализовать адаптер #3 — `doq.kz` (DOQ.kz) с фикстурными тестами
-- [x] Task 11: Провести живой E2E-прогон (≥ 3 источника, ≥ 100 услуг, 0 дублей при перезапуске) и финальную проверку качества
+### Phase 4: Live Verification on Real KZ Data
+- [ ] Task 8: Прогнать `make seed-catalog && make normalize` на 2 625 реальных raw-записях, проверить межклинические пересечения, идемпотентность, покрытие ≥ 85% и обновить `README.md`
 
 ### Checkpoint 4: Module Complete
-- [x] Все критерии успеха из `SPEC-ingestion.md` выполнены, покрытие ≥ 80%, `ruff` и `mypy` чистые
-- [x] Ревью с человеком перед переходом к `SPEC-normalization.md`
+- [ ] Все 8 критериев успеха из `SPEC-normalization.md` выполнены, покрытие ≥ 85%, `ruff` и `mypy` чистые
+- [ ] Ревью с человеком перед переходом к `SPEC-search-api.md`
 
 ## Parallelization Opportunities
 
-- **Можно выполнять параллельно**: Task 3 (`PoliteHttpClient`), Task 4 (HTML/PDF), Task 5 (DOCX/Excel) после Task 2; а также Task 8, Task 9, Task 10 (три независимых адаптера источников) после Task 7.
-- **Строго последовательно**: Task 1 → Task 2 → Task 6 → Task 7 → Task 11.
+- **Можно выполнять параллельно**: Task 3 (`text_utils.py`) и Task 4 (`catalog_seed.json`) после Task 2.
+- **Строго последовательно**: Task 1 → Task 2 → Task 5 → Task 6 → Task 7 → Task 8.
 
 ## Risks and Mitigations
 
 | Risk | Impact | Mitigation |
 |---|---|---|
-| `invitro.kz` запрещает обход в `robots.txt` (`Disallow: /`), `helix.kz` имеет сломанную TLS-цепочку | High | Не обходим `robots.txt` и не отключаем TLS-валидацию; заменяем на проверенные открытые источники РК (`invivo.kz`, `doq.kz`, опционально `mck.kz`) после подтверждения пользователя |
-| Часть страниц выбранных сайтов рендерится через JS (SPA) | High | В начале каждой задачи адаптера (Tasks 8–10) проверяем HTML и публичные JSON/sitemap-эндпоинты сайта; если JSON/SSR нет — эскалируем по правилу `Ask first` до добавления Playwright |
-| Сетевые таймауты / временная недоступность сайта при живом прогоне | Medium | `PoliteHttpClient` с exponential backoff и таймаутами + полная изоляция ошибок в `IngestionRunner` + офлайн-фикстуры для всех автотестов |
-| Различие прав/SELinux-меток на bind-mount в `podman` | Medium | Используем флаг `:Z` в `podman run -v` и фиксируем команды в `Makefile` |
-| Блокировка по частоте запросов при тестировании | Medium | Строгий `min_delay_sec >= 1.5s`, `concurrency=1` на домен и флаг `--limit` в CLI для ограниченных прогонов |
-
-## Resolved Decisions
-
-1. **Утверждённая тройка источников V1**: **`kdlolymp.kz` + `invivo.kz` + `doq.kz`** (все три проверены на разрешающий `robots.txt` и валидный TLS; `invitro.kz` и `helix.kz` исключены).
-2. **План утверждён**: переходим к Phase 4 (Implement), начиная с Task 1.
+| Ложные склейки похожих анализов в `RapidFuzz` (напр. «Витамин B12» и «Витамин D» или «АЛТ» и «АСТ») | High | Консервативный порог `86.0`, категорийная изоляция и проверка коротких/конфликтных анализов в юнит-тестах `test_matcher.py`; сомнительные уходят в `unmatched_services` |
+| Дубликаты названий с разным регистром/звёздочками (`Подсчет ретикулоцитов*`, `Кровь. Гематокрит`) снижают recall | Medium | Анализируем топ реальных строк из `raw_service_records` при составлении `catalog_seed.json` (Task 4) и снимаем шумовые префиксы/символы в `text_utils.py` |
+| Пересборка `medprice-backend:dev` при добавлении `rapidfuzz` займёт время | Low | `rapidfuzz` распространяется как готовый binary wheel под `cp312-manylinux`; пересборка делается один раз в Task 1 |
+| Старые raw-записи `kdlolymp`/`invivo` без адреса из раннего прогона конфликтуют с новыми записями с адресом | Medium | Дедупликация в `clinics` по `(source_id, clinic_name, city, address)`; перед финальным живым прогоном в Task 8 проверим чистоту витрины `clinics` и `service_offers` |

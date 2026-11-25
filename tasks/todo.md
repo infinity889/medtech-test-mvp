@@ -1,312 +1,231 @@
-# Task List: Ingestion (`ingestion`) — V1
+# Task List: Normalization (`normalization`) — V1
 
-Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-ingestion.md](../SPEC-ingestion.md)
+Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](../SPEC-normalization.md)
 
 ---
 
-## Task 1: Подготовить `podman`-окружение (Python 3.12 + PostgreSQL 16), `pyproject.toml` и `Makefile`
+## Task 1: Добавить `rapidfuzz`, настройки нормализации в `Settings`, цели в `Makefile` и пересобрать контейнер
 
-**Description:** Создать минимальный воспроизводимый каркас backend-проекта с контейнером Python 3.12 (`backend/Containerfile`), описанием зависимостей и инструментов качества (`pyproject.toml`) и `Makefile` для управления сетью `podman`, контейнером PostgreSQL 16 и запуском тестов/линтеров.
+**Description:** Добавить зависимость `rapidfuzz>=3.10,<4.0` в `backend/pyproject.toml`, расширить `Settings` параметрами нормализации (`usd_to_kzt_rate=Decimal("495.00")`, `fuzzy_match_threshold=86.0`, `fuzzy_suggestion_threshold=60.0`, `offer_max_age_days=30`), добавить команды `seed-catalog`, `normalize`, `test-normalization` в `Makefile` и пересобрать контейнер `medprice-backend:dev`.
 
 **Acceptance criteria:**
-- [x] `backend/Containerfile` собирается на базе `python:3.12-slim` со всеми зависимостями модуля `ingestion` (`sqlalchemy`, `psycopg[binary]`, `alembic`, `httpx`, `beautifulsoup4`, `lxml`, `pdfplumber`, `python-docx`, `openpyxl`, `pydantic-settings`, `apscheduler`, `pytest`, `pytest-asyncio`, `pytest-cov`, `respx`, `ruff`, `mypy`).
-- [x] `Makefile` предоставляет команды `db-up`, `db-down`, `backend-build`, `migrate`, `test-ingestion`, `lint`, `typecheck`.
-- [x] PostgreSQL 16 запускается в сети `medprice-net` и отвечает на `pg_isready`.
+- [ ] `rapidfuzz` импортируется внутри контейнера `medprice-backend:dev`.
+- [ ] `Settings` считывает и валидирует `USD_TO_KZT_RATE` (> 0, `Decimal`), `FUZZY_MATCH_THRESHOLD` (0..100), `FUZZY_SUGGESTION_THRESHOLD` (0..100, ≤ match threshold), `OFFER_MAX_AGE_DAYS` (≥ 1).
+- [ ] `Makefile` содержит цели `seed-catalog`, `normalize`, `test-normalization`, `test-all`.
 
 **Verification:**
-- [x] Build succeeds: `make backend-build && make db-up`
-- [x] Tests pass: `make test-ingestion` (запускает `pytest` внутри контейнера без ошибок импорта)
-- [x] Manual check: `podman exec medprice-pg pg_isready -U medprice` возвращает `accepting connections`
+- [ ] Build succeeds: `make backend-build`
+- [ ] Tests pass: `make test-ingestion && make lint && make typecheck`
+- [ ] Manual check: `podman run --rm medprice-backend:dev python -c "import rapidfuzz; print(rapidfuzz.__version__)"`
 
 **Dependencies:** None
 
 **Files likely touched:**
-- `Makefile`
-- `backend/Containerfile`
 - `backend/pyproject.toml`
-- `backend/app/__init__.py`
-- `backend/tests/__init__.py`
+- `backend/app/core/config.py`
+- `Makefile`
+- `backend/app/normalization/__init__.py`
 
-**Estimated scope:** Medium (5 files)
+**Estimated scope:** Small (4 files)
 
 ---
 
-## Task 2: Реализовать конфиг, подключение БД, ORM-модели raw-слоя и миграцию Alembic
+## Task 2: Реализовать ORM-модели слоя `normalization` и обратимую миграцию Alembic `0002`
 
-**Description:** Создать конфигурацию (`Settings` через `pydantic-settings`), движок/сессию SQLAlchemy 2.0, ORM-модели raw-слоя (`ScrapeRun`, `RawServiceRecord`, `ScrapeError` с уникальным ключом `(source_id, record_fingerprint)` и индексами) и первую миграцию Alembic.
+**Description:** Создать SQLAlchemy 2.0 ORM-модели (`ServiceCatalog`, `Clinic`, `ServiceOffer`, `PriceHistory`, `UnmatchedService`) и enum-типы (`ServiceCategory`, `CurrencyCode`, `MatchMethod`, `UnmatchedStatus`), подключить модели в `alembic/env.py` и написать обратимую миграцию `0002_normalization_layer.py` со всеми индексами, FK и `UNIQUE (clinic_id, service_id)`.
 
 **Acceptance criteria:**
-- [x] Таблицы `scrape_runs`, `raw_service_records`, `scrape_errors` создаются миграцией Alembic со всеми полями, типами (`Numeric(12, 2)`, timezone-aware `DateTime`, `JSONB`), FK и `UNIQUE (source_id, record_fingerprint)`.
-- [x] Миграция обратима (`alembic upgrade head` → `alembic downgrade base` → `alembic upgrade head` проходит без ошибок).
-- [x] Конфиг считывает `DATABASE_URL`, `USER_AGENT`, `DEFAULT_MIN_DELAY_SEC` (≥ 1.5), `RAW_RETENTION_DAYS` (≥ 90).
+- [ ] Миграция `0002_normalization_layer.py` создаёт 5 таблиц (`service_catalog`, `clinics`, `service_offers`, `price_history`, `unmatched_services`) со всеми полями, FK, индексами и уникальными ограничениями из `SPEC-normalization.md`.
+- [ ] Миграция обратима (`alembic upgrade head` → `alembic downgrade 0001_ingestion_raw_layer` → `alembic upgrade head`) без потери таблиц `ingestion`.
+- [ ] Интеграционный тест проверяет создание таблиц, `UNIQUE (clinic_id, service_id)` и `UNIQUE (raw_record_id)` в `unmatched_services`.
 
 **Verification:**
-- [x] Tests pass: `make migrate && make test-ingestion`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: проверить созданные таблицы и constraints в PostgreSQL через `\dt` и `\d raw_service_records`
+- [ ] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_models.py"`
+- [ ] Build succeeds: `make migrate && make lint && make typecheck`
+- [ ] Manual check: проверить обратимость `0002 → 0001 → 0002` на `medprice_test` и `\dt` в `medprice`
 
 **Dependencies:** Task 1
 
 **Files likely touched:**
-- `backend/app/core/config.py`
-- `backend/app/core/db.py`
-- `backend/app/ingestion/models.py`
-- `backend/alembic.ini`
-- `backend/alembic/env.py` + `backend/alembic/versions/0001_ingestion_raw_layer.py`
-
-**Estimated scope:** Medium (5 files)
-
----
-
-## Checkpoint 1: After Tasks 1–2 (Foundation)
-- [x] Контейнер `medprice-backend:dev` (Python 3.12) собран и `medprice-pg` (PostgreSQL 16) работает
-- [x] `alembic upgrade head` и `downgrade`/`upgrade` проходят без ошибок
-- [x] `ruff`, `mypy` и `pytest` работают внутри контейнера
-
----
-
-## Task 3: Реализовать `PoliteHttpClient` (`robots.txt`, rate limit, ретраи) и офлайн-тесты
-
-**Description:** Реализовать асинхронный HTTP-клиент `PoliteHttpClient` поверх `httpx.AsyncClient` с кэшируемой проверкой `robots.txt` (через `urllib.robotparser`), ограничением конкурентности `1` на домен, минимальной задержкой ≥ 1.5 сек (+ jitter), понятным `User-Agent`, строгой проверкой TLS и ретраями на временные ошибки (429/5xx/таймаут).
-
-**Acceptance criteria:**
-- [x] Запрос к URL, запрещённому в `robots.txt`, не выполняется и выбрасывает типизированное исключение `RobotsDisallowedError`.
-- [x] Последовательные запросы к одному домену соблюдают минимальную задержку `min_delay_sec` (проверено в юнит-тесте с подменой таймера/sleep).
-- [x] Временные ответы `429`/`503` ретраятся с backoff ограниченное число раз, после чего поднимают структурированную ошибку.
-
-**Verification:**
-- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_http_client.py"`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: убедиться, что `verify=True` по умолчанию и отключение TLS не используется
-
-**Dependencies:** Task 2
-
-**Files likely touched:**
-- `backend/app/ingestion/http_client.py`
-- `backend/tests/ingestion/test_http_client.py`
-
-**Estimated scope:** Small (2 files)
-
----
-
-## Task 4: Реализовать HTML и PDF экстракторы прайс-листов с тестами на фикстурах
-
-**Description:** Создать переиспользуемые экстракторы для извлечения табличных и списочных прайс-листов из HTML (`beautifulsoup4` + `lxml`) и PDF (`pdfplumber`), включая нормализацию строковых цен в `Decimal` и разбор валют (`KZT`, `₸`, `тг`, `USD`, `$`) и сроков выполнения.
-
-**Acceptance criteria:**
-- [x] HTML-экстрактор извлекает строки `(service_name_raw, price_raw, currency_raw, duration_days_raw)` из типовых HTML-таблиц и блоков прайса, пропуская заголовки/пустые цены с отчётом об ошибках строк.
-- [x] PDF-экстрактор извлекает прайс-таблицы из многостраничного PDF через `pdfplumber` без падения на пустых/битых строках.
-- [x] Оба экстрактора покрыты офлайн-тестами на фикстурах (валидные строки, пробелы/разделители тысяч, невалидные цены, USD/KZT).
-
-**Verification:**
-- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_extractors_html_pdf.py"`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: проверить, что суммы возвращаются строго как `Decimal`
-
-**Dependencies:** Task 2
-
-**Files likely touched:**
-- `backend/app/ingestion/extractors/__init__.py`
-- `backend/app/ingestion/extractors/html.py`
-- `backend/app/ingestion/extractors/pdf.py`
-- `backend/tests/ingestion/test_extractors_html_pdf.py`
+- `backend/app/normalization/models.py`
+- `backend/alembic/env.py`
+- `backend/alembic/versions/0002_normalization_layer.py`
+- `backend/tests/normalization/test_models.py`
 
 **Estimated scope:** Medium (4 files)
 
 ---
 
-## Task 5: Реализовать DOCX и Excel экстракторы прайс-листов с тестами на фикстурах
+## Checkpoint 1: After Tasks 1–2 (Foundation)
+- [ ] Контейнер `medprice-backend:dev` пересобран с `rapidfuzz`
+- [ ] Миграция `0002_normalization_layer` применена и проверена на обратимость
+- [ ] Существующие 48 тестов `ingestion` и новые тесты моделей `normalization` проходят чисто
 
-**Description:** Создать переиспользуемые экстракторы для извлечения прайс-листов из документов Word (`.docx` через `python-docx`) и электронных таблиц Excel (`.xlsx` через `openpyxl`), с тестами на программно генерируемых/сохранённых фикстурах.
+---
+
+## Task 3: Реализовать нормализацию текста и конвертацию валют `KZT`/`USD → KZT` (`text_utils.py`)
+
+**Description:** Реализовать чистые утилиты предобработки названий услуг (`ё→е`, снятие кавычек/звёздочек/скобок-мусора, сжатие пробелов, снятие типовых префиксов вроде «Кровь.», «Моча.», «Приём врача»), маппинг строкового `category_hint` в `ServiceCategory`, генерацию стабильного `clinic_key` (SHA-256) и конвертацию валют `convert_to_kzt(price, currency, usd_rate)` через `Decimal`.
 
 **Acceptance criteria:**
-- [x] DOCX-экстрактор извлекает прайс-строки из таблиц Word-документа, корректно определяя колонки названия, цены и срока.
-- [x] Excel-экстрактор извлекает прайс-строки со всех/выбранных листов `.xlsx`, обрабатывая числовые и строковые ячейки цен.
-- [x] Некорректные/пустые строки возвращаются как ошибки разбора, не прерывая обработку остальных строк документа.
+- [ ] `normalize_service_text` детерминированно приводит «Общий анализ крови (ОАК)*», «Кровь. Общий анализ» и «Ёмкость...» к чистому нормализованному виду.
+- [ ] `convert_to_kzt` возвращает `Decimal` с точностью `0.01` (`ROUND_HALF_UP`) для `KZT` и `USD`, и отклоняет неподдерживаемые валюты / неположительные цены.
+- [ ] `map_category_hint` корректно маппит русские/английские подсказки в `ServiceCategory` (`lab`, `doctor`, `diagnostics`, `procedure`) или `None`.
 
 **Verification:**
-- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_extractors_docx_excel.py"`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: убедиться, что все 4 формата из ТЗ 3.1 (HTML, PDF, DOCX, Excel) доступны через общий пакет `app.ingestion.extractors`
+- [ ] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_text_and_currency.py"`
+- [ ] Build succeeds: `make lint && make typecheck`
+- [ ] Manual check: убедиться, что везде используется `Decimal`, без `float` для денег
 
-**Dependencies:** Task 4
+**Dependencies:** Task 2
 
 **Files likely touched:**
-- `backend/app/ingestion/extractors/docx.py`
-- `backend/app/ingestion/extractors/excel.py`
-- `backend/tests/ingestion/test_extractors_docx_excel.py`
+- `backend/app/normalization/text_utils.py`
+- `backend/tests/normalization/test_text_and_currency.py`
+
+**Estimated scope:** Small (2 files)
+
+---
+
+## Task 4: Сформировать курируемый справочник `catalog_seed.json` (65–80 услуг на базе реальных данных РК)
+
+**Description:** Проанализировать реальные названия услуг из `raw_service_records` (`kdlolymp`, `invivo`, `doq`) и составить версионируемый JSON-справочник `backend/app/normalization/data/catalog_seed.json` на 65–80 наиболее востребованных позиций по всем 4 категориям ТЗ (`lab`, `doctor`, `diagnostics`, `procedure`) с богатыми синонимами и аббревиатурами (включая `ОАК`/`CBC`, `ОАМ`, `ТТГ`, `СОЭ`, `Ферритин`, `Витамин D`, `Терапевт`, `Кардиолог`, `УЗИ ОБП`, `ЭКГ`, `МРТ` и др.).
+
+**Acceptance criteria:**
+- [ ] `catalog_seed.json` содержит ≥ 65 (строго ≥ 50 по ТЗ) уникальных позиций с валидными `code`, `canonical_name`, `category`, `synonyms`.
+- [ ] Представлены все 4 категории (`lab`, `doctor`, `diagnostics`, `procedure`), нет дубликатов `code`, `canonical_name` или пересекающихся точных синонимов между разными услугами.
+- [ ] Кейс ТЗ (`«ОАК»`, `«Общий анализ крови»`, `«CBC»`, `«Клинический анализ крови»`) присутствует в синонимах единой услуги `Общий анализ крови (ОАК)`.
+
+**Verification:**
+- [ ] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_catalog_seed.py"`
+- [ ] Build succeeds: `make lint && make typecheck`
+- [ ] Manual check: проверить распределение позиций по 4 категориям в выводе теста
+
+**Dependencies:** Task 2
+
+**Files likely touched:**
+- `backend/app/normalization/data/catalog_seed.json`
+- `backend/app/normalization/catalog_loader.py`
+- `backend/tests/normalization/test_catalog_seed.py`
 
 **Estimated scope:** Small (3 files)
 
 ---
 
-## Checkpoint 2: After Tasks 3–5 (Politeness & Extractors)
-- [x] Все офлайн-тесты `PoliteHttpClient` и 4 экстракторов (HTML, PDF, DOCX, Excel) зелёные
-- [x] `ruff check` и `mypy` проходят без предупреждений и ошибок
+## Task 5: Реализовать детерминированный `ServiceMatcher` (`exact` → `synonym` → `RapidFuzz`)
 
----
-
-## Task 6: Реализовать DTO, `BaseSourceAdapter`, `AdapterRegistry` и `IngestionRunner`
-
-**Description:** Реализовать Pydantic-схемы (`RawServiceInput`, `RawServiceRecordDTO`, `ScrapeRunDTO`, `ScrapeErrorDTO`, `SourceInfo`), базовый интерфейс адаптера, реестр подключаемых источников и оркестратор `IngestionRunner` с вычислением `record_fingerprint`, идемпотентным UPSERT-ом и полной изоляцией ошибок между источниками.
+**Description:** Реализовать матчер `ServiceMatcher`, индексирующий канонические названия и синонимы справочника в памяти, и выполняющий 3-ступенчатый поиск: 1) `exact` по нормализованному `canonical_name`, 2) `synonym` по нормализованным синонимам, 3) категорийно-изолированный `RapidFuzz` (`fuzz.token_sort_ratio` / `fuzz.ratio` с защитой от коротких ложных совпадений типа `АЛТ`/`АСТ`) с порогом авто-матча `86.0` и подсказкой кандидата `>= 60.0`.
 
 **Acceptance criteria:**
-- [x] Повторный запуск `IngestionRunner` на неизменных данных даёт `records_inserted == 0` и `records_updated == N` (0 дубликатов в БД).
-- [x] Изменение цены для той же услуги создаёт новую запись в `raw_service_records`, сохраняя старую запись нетронутой.
-- [x] Исключение в одном адаптере (или `RobotsDisallowedError` / ошибка валидации строки) фиксируется в `scrape_errors`, помечает запуск этого источника как `failed`/`partial` и не прерывает остальные источники.
+- [ ] «ОАК», «Общий анализ крови», «CBC», «Клинический анализ крови» и реальные названия из `kdlolymp`/`invivo` сводятся к одной услуге `Общий анализ крови (ОАК)`.
+- [ ] Услуги с известным `category_hint` никогда не матчатся через `RapidFuzz` с другой категорией (напр. `lab` не склеивается с `doctor`).
+- [ ] Похожие, но разные короткие анализы (`АЛТ` vs `АСТ`, `Т3` vs `Т4`, `Витамин D` vs `Витамин B12`) не склеиваются ошибочно.
+- [ ] Нераспознанная услуга возвращает `is_matched == False` и заполняет `suggested_service_id` / `suggested_score`, если лучший кандидат `>= 60.0`.
 
 **Verification:**
-- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_runner.py"`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: проверить, что добавление фикстурного тестового адаптера через `AdapterRegistry.register()` не требует правок в `runner.py`
+- [ ] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_matcher.py"`
+- [ ] Build succeeds: `make lint && make typecheck`
+- [ ] Manual check: проверить точность на наборе из ≥ 15 реальных названий из `kdlolymp`, `invivo`, `doq`
 
-**Dependencies:** Tasks 2, 3
-
-**Files likely touched:**
-- `backend/app/ingestion/schemas.py`
-- `backend/app/ingestion/adapters/base.py`
-- `backend/app/ingestion/adapters/registry.py`
-- `backend/app/ingestion/runner.py`
-- `backend/tests/ingestion/test_runner.py`
-
-**Estimated scope:** Medium (5 files)
-
----
-
-## Task 7: Реализовать публичный `IngestionService`, `scheduler.py`, `cli.py` и очистку ≥ 90 дней
-
-**Description:** Реализовать публичный фасад `IngestionService` (контракт для `normalization` и `search-api`: `list_sources`, `trigger_run`, `list_runs`, `list_errors`, `iter_raw_records`, `purge_expired_raw_records`), периодический планировщик (`APScheduler`) и CLI (`run`, `list-sources`, `purge-expired`).
-
-**Acceptance criteria:**
-- [x] `IngestionService.iter_raw_records(updated_since=...)` возвращает батчи `RawServiceRecordDTO` в детерминированном порядке для модуля `normalization`.
-- [x] `purge_expired_raw_records(retention_days)` отклоняет значение `< 90` (`ValueError`) и удаляет только записи с `last_seen_at < now - retention_days`.
-- [x] CLI поддерживает `python -m app.ingestion.cli list-sources`, `run --source all|<id> [--limit N]`, `purge-expired`, а `scheduler.py` конфигурирует ежедневный запуск (24h).
-
-**Verification:**
-- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_service.py"`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: запустить `python -m app.ingestion.cli list-sources` внутри контейнера
-
-**Dependencies:** Task 6
+**Dependencies:** Tasks 3, 4
 
 **Files likely touched:**
-- `backend/app/ingestion/service.py`
-- `backend/app/ingestion/scheduler.py`
-- `backend/app/ingestion/cli.py`
-- `backend/tests/ingestion/test_service.py`
-
-**Estimated scope:** Medium (4 files)
-
----
-
-## Checkpoint 3: After Tasks 6–7 (Ingestion Core)
-- [x] Весь движок `ingestion` (дедупликация, изоляция ошибок, 90-дневный аудит, реестр адаптеров, `IngestionService`, CLI, планировщик) протестирован против реальной PostgreSQL 16
-- [x] Все тесты, `ruff` и `mypy` проходят чисто
-
----
-
-## Task 8: Реализовать адаптер источника #1 — `kdlolymp.kz` (КДЛ Олимп)
-
-**Description:** Изучить открытую структуру каталога/прайса и городов на `kdlolymp.kz` (в рамках разрешённого `robots.txt`), реализовать `KdlOlympAdapter`, зарегистрировать в `registry.py` и написать офлайн-тесты на сохранённых HTML/JSON-фикстурах.
-
-**Acceptance criteria:**
-- [x] Адаптер извлекает реальные лабораторные услуги, цены в KZT, сроки выполнения (где указаны), город и контактные метаданные `kdlolymp.kz` без обхода `robots.txt`.
-- [x] Зарегистрирован в `registry.py` без изменений в `runner.py`, `models.py`, `service.py` или `cli.py`.
-- [x] Офлайн-контрактные тесты на сохранённых фикстурах проверяют валидность `RawServiceInput` и корректный парсинг цен/сроков.
-
-**Verification:**
-- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_adapter_kdlolymp.py"`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: пробный CLI-прогон `run --source kdlolymp --limit 30` сохраняет ≥ 30 валидных записей в `raw_service_records`
-
-**Dependencies:** Tasks 4, 7
-
-**Files likely touched:**
-- `backend/app/ingestion/adapters/kdlolymp.py`
-- `backend/app/ingestion/adapters/registry.py`
-- `backend/tests/ingestion/fixtures/kdlolymp_*`
-- `backend/tests/ingestion/test_adapter_kdlolymp.py`
-
-**Estimated scope:** Medium (4 files)
-
----
-
-## Task 9: Реализовать адаптер источника #2 — `invivo.kz` (Лаборатория INVIVO)
-
-**Description:** Изучить открытую структуру прайса/каталога и городов на `invivo.kz` (или другом утверждённом источнике вместо заблокированного `invitro.kz`), реализовать адаптер, зарегистрировать в `registry.py` и покрыть офлайн-тестами на фикстурах.
-
-**Acceptance criteria:**
-- [x] Адаптер извлекает реальные услуги, цены в KZT, сроки выполнения и городские метаданные с соблюдением `robots.txt` и задержек.
-- [x] Зарегистрирован в `registry.py` без изменений в ядре `ingestion`.
-- [x] Офлайн-контрактные тесты на сохранённых фикстурах проходят полностью.
-
-**Verification:**
-- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_adapter_invivo.py"`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: пробный CLI-прогон `run --source invivo --limit 30` сохраняет ≥ 30 валидных записей
-
-**Dependencies:** Tasks 4, 7
-
-**Files likely touched:**
-- `backend/app/ingestion/adapters/invivo.py`
-- `backend/app/ingestion/adapters/registry.py`
-- `backend/tests/ingestion/fixtures/invivo_*`
-- `backend/tests/ingestion/test_adapter_invivo.py`
-
-**Estimated scope:** Medium (4 files)
-
----
-
-## Task 10: Реализовать адаптер источника #3 — `doq.kz` (DOQ.kz)
-
-**Description:** Изучить открытую структуру клиник/приёмов врачей/диагностики на `doq.kz` (агрегатор из ТЗ с открытым `robots.txt`, покрывает приёмы врачей, диагностику, рейтинги клиник, адреса, онлайн-запись и города РК), реализовать адаптер, зарегистрировать в `registry.py` и покрыть офлайн-тестами на фикстурах.
-
-**Acceptance criteria:**
-- [x] Адаптер извлекает услуги клиник/врачей, цены в KZT, город, адрес, рейтинг и флаг онлайн-записи (где присутствуют на странице) с соблюдением `robots.txt`.
-- [x] Зарегистрирован в `registry.py` без изменений в ядре `ingestion`.
-- [x] Офлайн-контрактные тесты на сохранённых фикстурах проходят полностью.
-
-**Verification:**
-- [x] Tests pass: `make test-ingestion PYTEST_ARGS="tests/ingestion/test_adapter_doq.py"`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: пробный CLI-прогон `run --source doq --limit 30` сохраняет ≥ 30 валидных записей
-
-**Dependencies:** Tasks 4, 7
-
-**Files likely touched:**
-- `backend/app/ingestion/adapters/doq.py`
-- `backend/app/ingestion/adapters/registry.py`
-- `backend/tests/ingestion/fixtures/doq_*`
-- `backend/tests/ingestion/test_adapter_doq.py`
-
-**Estimated scope:** Medium (4 files)
-
----
-
-## Task 11: Провести живой E2E-прогон и финальную проверку модуля `ingestion`
-
-**Description:** Запустить полный сбор по всем 3+ зарегистрированным источникам в PostgreSQL, проверить повторный идемпотентный запуск (0 дублей), проверить объём реальных данных (≥ 100 услуг, ≥ 3 источника, ≥ 3 города РК), покрытие тестами ≥ 80% и зафиксировать команды запуска в `README.md`.
-
-**Acceptance criteria:**
-- [x] В `raw_service_records` собрано ≥ 100 реальных услуг минимум из 3 открытых источников.
-- [x] Повторный запуск на тех же параметрах даёт 0 дублей (`records_inserted == 0`).
-- [x] Покрытие `pytest --cov=app.ingestion` ≥ 80%, `ruff check` и `mypy` проходят без ошибок.
-
-**Verification:**
-- [x] Tests pass: `make test-ingestion`
-- [x] Build succeeds: `make lint && make typecheck`
-- [x] Manual check: SQL-запрос по `raw_service_records` (`GROUP BY source_id, city_raw`) подтверждает ≥ 3 источников и ≥ 100 записей; повторный запуск даёт `records_inserted = 0`
-
-**Dependencies:** Tasks 8, 9, 10
-
-**Files likely touched:**
-- `README.md`
-- `backend/tests/ingestion/test_integration_e2e.py`
+- `backend/app/normalization/matcher.py`
+- `backend/tests/normalization/test_matcher.py`
 
 **Estimated scope:** Small (2 files)
 
 ---
 
-## Checkpoint 4: After Task 11 (Module Complete)
-- [x] Все 7 критериев успеха из [SPEC-ingestion.md](../SPEC-ingestion.md) выполнены и подтверждены
-- [x] Готово к ревью пользователя и переходу к `SPEC-normalization.md`
+## Checkpoint 2: After Tasks 3–5 (Dictionary & Matching Engine)
+- [ ] `text_utils`, `catalog_seed.json` (≥ 65 позиций) и `ServiceMatcher` полностью протестированы
+- [ ] `ruff check` и `mypy --strict` проходят без ошибок
+
+---
+
+## Task 6: Реализовать DTO (`schemas.py`) и `NormalizationPipeline`
+
+**Description:** Создать Pydantic v2 DTO (`ServiceCatalogDTO`, `ClinicDTO`, `ServiceOfferDTO`, `UnmatchedServiceDTO`, `PriceHistoryPointDTO`, `SeedSummary`, `NormalizationSummary`) и оркестратор `NormalizationPipeline`, читающий батчи из `IngestionService.iter_raw_records(...)`, дедуплицирующий `clinics`, выполняющий upsert `service_offers` (с выбором свежайшей/минимальной цены при коллизии `(clinic_id, service_id)`), фиксирующий изменения в `price_history` и отправляющий нераспознанные строки в `unmatched_services`.
+
+**Acceptance criteria:**
+- [ ] Прогон пайплайна на raw-данных создаёт `clinics`, `service_offers`, начальные точки `price_history` и записи `unmatched_services`.
+- [ ] Повторный прогон на тех же raw-данных идемпотентен: 0 дублей в `clinics`, `service_offers`, `price_history` и `unmatched_services`.
+- [ ] Появление новой цены в raw-слое обновляет `service_offers.price_kzt` и добавляет новую запись в `price_history`.
+- [ ] Предложение с `parsed_at` старше 30 дней сохраняется с `is_active = False`.
+
+**Verification:**
+- [ ] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_pipeline.py"`
+- [ ] Build succeeds: `make lint && make typecheck`
+- [ ] Manual check: проверить, что `NormalizationPipeline` не делает ни одной записи в таблицы `ingestion`
+
+**Dependencies:** Task 5
+
+**Files likely touched:**
+- `backend/app/normalization/schemas.py`
+- `backend/app/normalization/pipeline.py`
+- `backend/tests/normalization/test_pipeline.py`
+
+**Estimated scope:** Medium (3 files)
+
+---
+
+## Task 7: Реализовать публичный `NormalizationService` и CLI (`cli.py`)
+
+**Description:** Реализовать фасад `NormalizationService` (полный контракт для `search-api`: `seed_catalog`, `run_normalization`, `list_catalog`, `list_unmatched`, `resolve_unmatched` с добавлением синонима и авто-резолвом совпадающих `pending`-записей, `ignore_unmatched`, `get_price_history`, `refresh_stale_offers`, `close`) и CLI (`seed-catalog`, `run`, `refresh-stale`, `stats`).
+
+**Acceptance criteria:**
+- [ ] `seed_catalog()` идемпотентно загружает `catalog_seed.json` (повторный вызов обновляет без дублей).
+- [ ] `resolve_unmatched(id, service_id, add_as_synonym=True)` переводит запись в `mapped`, создаёт `service_offers` + `price_history`, добавляет `service_name_raw` в синонимы и перематчивает совпадающие `pending`-записи.
+- [ ] `ignore_unmatched(id)` переводит запись в `ignored`, `refresh_stale_offers(30)` деактивирует предложения старше 30 дней, `get_price_history(...)` возвращает хронологический ряд цен.
+- [ ] CLI `python -m app.normalization.cli seed-catalog | run | refresh-stale | stats` работает внутри контейнера и корректно освобождает `Engine`.
+
+**Verification:**
+- [ ] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_service.py"`
+- [ ] Build succeeds: `make lint && make typecheck`
+- [ ] Manual check: проверить `python -m app.normalization.cli stats`
+
+**Dependencies:** Task 6
+
+**Files likely touched:**
+- `backend/app/normalization/service.py`
+- `backend/app/normalization/cli.py`
+- `backend/tests/normalization/test_service.py`
+
+**Estimated scope:** Medium (3 files)
+
+---
+
+## Checkpoint 3: After Tasks 6–7 (Pipeline & Public Contract)
+- [ ] Весь движок `normalization` и контракт `NormalizationService` протестированы против реальной PostgreSQL 16
+- [ ] `make test-normalization`, `make test-ingestion`, `make lint`, `make typecheck` проходят чисто
+
+---
+
+## Task 8: Живой прогон на 2 625 реальных записях РК, верификация пересечений и обновление `README.md`
+
+**Description:** Применить миграцию `0002` на `medprice`, выполнить `make seed-catalog && make normalize` на реальных 2 625 записях из `kdlolymp`, `invivo` и `doq`, проверить качество матчинга и реальные межклинические сравнения цен (одна услуга в нескольких клиниках/лабораториях), проверить идемпотентность повторного `make normalize`, подтвердить покрытие ≥ 85% и обновить `README.md`.
+
+**Acceptance criteria:**
+- [ ] В `service_catalog` загружено ≥ 65 позиций по 4 категориям.
+- [ ] В `service_offers` есть реальные нормализованные предложения по всем 3 источникам (`kdlolymp`, `invivo`, `doq`) и реальные пересечения цен между клиниками по ключевым услугам (напр. ОАК, ОАМ, ТТГ, Ферритин, Терапевт, Кардиолог, УЗИ).
+- [ ] Повторный `make normalize` даёт 0 новых дублей в `clinics`, `service_offers`, `price_history`, `unmatched_services`.
+- [ ] Покрытие `make test-normalization` ≥ 85%, все тесты (`ingestion` + `normalization`), `ruff` и `mypy` зелёные.
+
+**Verification:**
+- [ ] Tests pass: `make test-all`
+- [ ] Build succeeds: `make lint && make typecheck`
+- [ ] Manual check: SQL-отчёт по `service_offers`, `clinics`, `price_history`, `unmatched_services` и пример сравнения цен по «Общий анализ крови (ОАК)» и «Приём терапевта»
+
+**Dependencies:** Task 7
+
+**Files likely touched:**
+- `README.md`
+- `backend/app/normalization/data/catalog_seed.json` *(при необходимости точечное дообогащение синонимов по результатам живого прогона)*
+
+**Estimated scope:** Small (2 files)
+
+---
+
+## Checkpoint 4: After Task 8 (Module Complete)
+- [ ] Все 8 критериев успеха из [SPEC-normalization.md](../SPEC-normalization.md) выполнены и подтверждены
+- [ ] Готово к ревью пользователя и переходу к `SPEC-search-api.md`
