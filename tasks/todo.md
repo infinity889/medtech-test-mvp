@@ -180,13 +180,13 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-web-ui.md](../SPEC-
 **Description:** Поднять полный стек (`medprice-pg` + `medprice-api` + `medprice-web`), проверить все экраны в реальном браузере на живых данных (поиск `ОАК`, фильтры, карта Leaflet, карточка клиники, сравнение `КДЛ Олимп` vs `INVIVO`, график истории цен, админка), проверить адаптивность (`375px` и `1440px`) и отсутствие ошибок в консоли, прогнать все тесты backend + frontend и обновить `README.md`.
 
 **Acceptance criteria:**
-- [ ] `http://localhost:5173` загружается и работает с реальными данными `medprice-api` без ошибок в консоли браузера.
-- [ ] Проверены брейкпоинты `375px` (мобильный) и `1440px` (десктоп).
-- [ ] `make test-all`, `make test-web`, `make lint-web`, `make typecheck-web`, `make build-web` проходят без ошибок.
+- [x] `http://localhost:5173` загружается и работает с реальными данными `medprice-api` без ошибок в консоли браузера.
+- [x] Проверены брейкпоинты `375px` (мобильный) и `1440px` (десктоп).
+- [x] `make test-all`, `make test-web`, `make lint-web`, `make typecheck-web`, `make build-web` проходят без ошибок.
 
 **Verification:**
-- [ ] Full suite passes: `make test-all && make test-web && make lint-web && make typecheck-web && make build-web`
-- [ ] Live browser check via browser subagent on `http://localhost:5173`
+- [x] Full suite passes: `make test-all && make test-web && make lint-web && make typecheck-web && make build-web`
+- [x] Live browser check via browser subagent on `http://localhost:5173`
 
 **Dependencies:** Task 6
 
@@ -198,5 +198,5 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-web-ui.md](../SPEC-
 ---
 
 ## Checkpoint 3: After Task 7 (Module Complete — MVP Ready)
-- [ ] Все 5 критериев успеха из [SPEC-web-ui.md](../SPEC-web-ui.md) подтверждены
-- [ ] Готово к финальному ревью пользователя и пушу на GitHub
+- [x] Все 5 критериев успеха из [SPEC-web-ui.md](../SPEC-web-ui.md) подтверждены
+- [x] Готово к финальному ревью пользователя и пушу на GitHub

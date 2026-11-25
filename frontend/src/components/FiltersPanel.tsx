@@ -202,7 +202,7 @@ export function FiltersPanel({
   );
 
   return (
-    <>
+    <div className="space-y-2 lg:space-y-0">
       <div className="lg:hidden">
         <button
           type="button"
@@ -216,17 +216,16 @@ export function FiltersPanel({
           </span>
           <span className="text-xs text-brand">{mobileOpen ? 'Скрыть' : 'Открыть'}</span>
         </button>
-        {mobileOpen ? (
-          <div className="mt-2 rounded-xl border border-border bg-surface p-4">{content}</div>
-        ) : null}
       </div>
 
       <aside
         aria-label="Панель фильтров"
-        className="hidden h-fit rounded-xl border border-border bg-surface p-5 lg:sticky lg:top-20 lg:block"
+        className={`${
+          mobileOpen ? 'block' : 'hidden'
+        } h-fit rounded-xl border border-border bg-surface p-4 lg:sticky lg:top-20 lg:block lg:p-5`}
       >
         {content}
       </aside>
-    </>
+    </div>
   );
 }

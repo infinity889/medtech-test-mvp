@@ -33,12 +33,17 @@ export function SearchBar({
 
   const listboxId = useId();
   const containerRef = useRef<HTMLDivElement>(null);
+  const shouldOpenOnFetchRef = useRef(false);
 
   useEffect(() => {
     const trimmed = value.trim();
     if (trimmed.length < 1) {
       setSuggestions([]);
       setIsOpen(false);
+      return;
+    }
+
+    if (!shouldOpenOnFetchRef.current) {
       return;
     }
 
@@ -52,7 +57,7 @@ export function SearchBar({
         );
         setSuggestions(res.items);
         setActiveIndex(-1);
-        setIsOpen(res.items.length > 0);
+        setIsOpen(shouldOpenOnFetchRef.current && res.items.length > 0);
       } catch {
         if (!controller.signal.aborted) {
           setSuggestions([]);
@@ -95,6 +100,7 @@ export function SearchBar({
     } else if (event.key === 'Enter') {
       event.preventDefault();
       const activeItem = activeIndex >= 0 ? suggestions[activeIndex] : undefined;
+      shouldOpenOnFetchRef.current = false;
       if (isOpen && activeItem) {
         onSelectService(activeItem);
         setIsOpen(false);
@@ -103,6 +109,7 @@ export function SearchBar({
         onSubmitSearch(value);
       }
     } else if (event.key === 'Escape') {
+      shouldOpenOnFetchRef.current = false;
       setIsOpen(false);
       setActiveIndex(-1);
     }
@@ -116,7 +123,9 @@ export function SearchBar({
           aria-hidden="true"
         />
         <input
-          type="search"
+          type="text"
+          inputMode="search"
+          enterKeyHint="search"
           role="combobox"
           aria-label="Поиск медицинской услуги"
           aria-expanded={isOpen}
@@ -128,9 +137,12 @@ export function SearchBar({
               : undefined
           }
           value={value}
-          onChange={(e) => onTextChange(e.target.value)}
+          onChange={(e) => {
+            shouldOpenOnFetchRef.current = true;
+            onTextChange(e.target.value);
+          }}
           onFocus={() => {
-            if (suggestions.length > 0) setIsOpen(true);
+            if (shouldOpenOnFetchRef.current && suggestions.length > 0) setIsOpen(true);
           }}
           onKeyDown={handleKeyDown}
           placeholder="Например: ОАК, CBC, Витамин D, Приём терапевта, УЗИ…"
@@ -140,6 +152,7 @@ export function SearchBar({
           <button
             type="button"
             onClick={() => {
+              shouldOpenOnFetchRef.current = false;
               onClear();
               setSuggestions([]);
               setIsOpen(false);
@@ -153,6 +166,7 @@ export function SearchBar({
         <button
           type="button"
           onClick={() => {
+            shouldOpenOnFetchRef.current = false;
             setIsOpen(false);
             onSubmitSearch(value);
           }}
@@ -178,6 +192,7 @@ export function SearchBar({
                   aria-selected={isActive}
                   onMouseDown={(e) => {
                     e.preventDefault();
+                    shouldOpenOnFetchRef.current = false;
                     onSelectService(item);
                     setIsOpen(false);
                   }}
@@ -215,6 +230,8 @@ export function SearchBar({
             key={chip}
             type="button"
             onClick={() => {
+              shouldOpenOnFetchRef.current = false;
+              setIsOpen(false);
               onTextChange(chip);
               onSubmitSearch(chip);
             }}

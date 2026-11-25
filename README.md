@@ -4,12 +4,12 @@
 
 ## Архитектура (Capability Map)
 
-Проект разрабатывается строго по Spec-Driven Development — см. [CAPABILITY-MAP.md](./CAPABILITY-MAP.md):
+Проект разработан строго по Spec-Driven Development — см. [CAPABILITY-MAP.md](./CAPABILITY-MAP.md):
 
 1. **`ingestion`** ([SPEC-ingestion.md](./SPEC-ingestion.md)) — сбор прайс-листов из публичных источников, соблюдение `robots.txt` и rate-limit, raw-слой PostgreSQL (ретеншн ≥ 90 дней), экстракторы HTML/PDF/DOCX/Excel, дедупликация, журнал ошибок, CLI и планировщик.
 2. **`normalization`** ([SPEC-normalization.md](./SPEC-normalization.md)) — справочник из 88 канонических услуг по 4 категориям, детерминированный матчер (`exact` → `synonym` → категорийно-изолированный `RapidFuzz`), конвертация `USD → KZT` (`Decimal`), дедуплицированные клиники и предложения, история цен (`price_history`), очередь ручной разметки (`unmatched_services`) и правило актуальности ≤ 30 дней.
 3. **`search-api`** ([SPEC-search-api.md](./SPEC-search-api.md)) — FastAPI REST API (`/api/v1`) поиска и сравнения цен: автодополнение, фильтры (город, категория, цена, рейтинг, онлайн-запись), сортировка (цена, расстояние Haversine, свежесть, рейтинг), жёсткое правило актуальности ≤ 30 дней, карточка клиники со ссылками 2GIS / Google Maps, сравнение 2–5 клиник в таблице (`/compare`), история цен и защищённая `X-Admin-Token` админка с блокировкой дублей парсинга (`409`).
-4. **`web-ui`** *(следующий этап)* — адаптивный интерфейс (React + TypeScript + Vite + Leaflet).
+4. **`web-ui`** ([SPEC-web-ui.md](./SPEC-web-ui.md)) — адаптивный веб-интерфейс (React 19 + TypeScript + Vite 6 + Tailwind CSS v4 + Leaflet) в контейнере Node 22: поиск в стиле Aviasales с WAI-ARIA автодополнением, фильтрами в URL и геолокацией, карта клиник OpenStreetMap со ссылками 2GIS / Google Maps, карточка клиники, таблица сравнения 2–5 клиник, SVG-график истории цен в `<dialog>` и панель оператора `/admin`.
 
 ## Подключённые открытые источники (`ingestion`)
 
@@ -21,47 +21,46 @@
 | `invivo` | [invivo.kz](https://invivo.kz) (Лаборатория INVIVO) | Лабораторные анализы, цены в KZT, сроки, адреса, графики, GPS | Алматы, Астана, Шымкент |
 | `doq` | [doq.kz](https://doq.kz) (DOQ.kz) | Приёмы врачей, диагностика, адреса, GPS, рейтинги, онлайн-запись | Алматы, Астана, Шымкент |
 
-## Основные эндпоинты REST API (`search-api`)
+## Быстрый старт (`podman` + PostgreSQL 16 + Python 3.12 + Node 22)
 
-Документация OpenAPI доступна после запуска API по адресу `http://127.0.0.1:8000/docs`:
-
-- `GET /api/v1/health` — проверка состояния API и PostgreSQL.
-- `GET /api/v1/meta/filters` — города, категории, диапазон цен и время обновления.
-- `GET /api/v1/services/autocomplete?q=ОАК` — ранжированные подсказки по справочнику услуг и синонимам.
-- `GET /api/v1/offers` — поиск и сравнение цен (фильтры, Haversine-расстояние, сортировка, правило свежести ≤ 30 дней).
-- `GET /api/v1/clinics` и `GET /api/v1/clinics/{clinic_id}` — список клиник (вкл. `has_geo=true` для карты) и карточка клиники со ссылками 2GIS / Google Maps.
-- `GET /api/v1/compare?clinic_ids=...` — табличное сравнение 2–5 клиник с выделением минимальной цены.
-- `GET /api/v1/services/{service_id}/price-history` — история изменения цен по услуге.
-- `/api/v1/admin/*` (заголовок `X-Admin-Token`) — источники, история/ошибки парсинга, ручной запуск (`POST /scrape-runs`), статистика и разбор очереди `unmatched`.
-
-## Быстрый старт (`podman` + Python 3.12 + PostgreSQL 16)
-
-Требования на хосте: `podman`, `make`.
+Требования на хосте: `podman`, `make` (Python и Node на хосте не требуются).
 
 ```bash
-# 1. Собрать Python 3.12 образ backend
+# 1. Собрать образы backend (Python 3.12) и frontend (Node 22)
 make backend-build
+make web-build
 
 # 2. Поднять PostgreSQL 16 и применить миграции Alembic
 make db-up
 make migrate
 
-# 3. Запустить все тесты backend (ingestion + normalization + search-api) + проверки качества
+# 3. Загрузить справочник услуг (88 позиций), собрать данные и нормализовать
+make seed-catalog
+make ingest SOURCE=all EXTRA_ARGS="--limit 600"
+make normalize
+
+# 4. Запустить REST API (:8000, Swagger /docs) и веб-интерфейс (:5173)
+make api-up
+make web-up
+# Веб-приложение: http://localhost:5173
+# Swagger OpenAPI: http://localhost:8000/docs
+
+# Остановить контейнеры
+make web-down
+make api-down
+```
+
+## Проверки качества и тесты
+
+```bash
+# Backend: 109 тестов (ingestion + normalization + search-api), ruff, mypy --strict
 make test-all
 make lint
 make typecheck
 
-# 4. Запустить сбор реальных данных по всем 3 источникам (опционально --limit N)
-make ingest SOURCE=all EXTRA_ARGS="--limit 600"
-
-# 5. Загрузить справочник услуг (88 позиций) и выполнить нормализацию raw → normalized
-make seed-catalog
-make normalize
-
-# 6. Запустить REST API на http://127.0.0.1:8000 (OpenAPI Swagger: /docs)
-make api-up
-curl -sS "http://127.0.0.1:8000/api/v1/services/autocomplete?q=%D0%9E%D0%90%D0%9A"
-
-# Остановить API-контейнер
-make api-down
+# Frontend: Vitest + Testing Library, ESLint, TypeScript strict, Vite production build
+make test-web
+make lint-web
+make typecheck-web
+make build-web
 ```
