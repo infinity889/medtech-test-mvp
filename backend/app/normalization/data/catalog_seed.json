@@ -1,0 +1,849 @@
+[
+  {
+    "code": "lab_oak",
+    "canonical_name": "Общий анализ крови (ОАК)",
+    "category": "lab",
+    "synonyms": [
+      "ОАК",
+      "CBC",
+      "Клинический анализ крови",
+      "Общий анализ крови",
+      "Общий анализ крови (ОАК без СОЭ)",
+      "Клинический анализ крови с лейкоцитарной формулой и измерением скорости оседания эритроцитов (ОАК + СОЭ)",
+      "Кровь. Общий анализ (ОАК: эритроциты, гемоглобин, лейкоциты, тромбоциты, СОЭ)",
+      "Кровь. Общий анализ из капиллярной крови (ОАК: эритроциты, гемоглобин, лейкоциты, тромбоциты, подсчет лейкоформулы)",
+      "Кровь. Развёрнутый общий анализ крови ( эритроциты, гемоглобин, лейкоциты, тромбоциты, СОЭ, ретикулоциты)"
+    ]
+  },
+  {
+    "code": "lab_oak_crp",
+    "canonical_name": "Общий анализ крови + С-реактивный белок (ОАК + СРБ)",
+    "category": "lab",
+    "synonyms": [
+      "ОАК + СРБ",
+      "Общий анализ крови (ОАК)+СРБ",
+      "Общий анализ крови с С-реактивным белком (ОАК + СРБ, без СОЭ)"
+    ]
+  },
+  {
+    "code": "lab_esr",
+    "canonical_name": "Скорость оседания эритроцитов (СОЭ)",
+    "category": "lab",
+    "synonyms": [
+      "СОЭ",
+      "ESR",
+      "Измерение скорости оседания эритроцитов (СОЭ) в крови",
+      "Измерение скорости оседания эритроцитов (СОЭ) в крови на анализаторе"
+    ]
+  },
+  {
+    "code": "lab_reticulocytes",
+    "canonical_name": "Подсчёт ретикулоцитов",
+    "category": "lab",
+    "synonyms": [
+      "Ретикулоциты",
+      "Подсчет ретикулоцитов*",
+      "Кровь. Ретикулоциты"
+    ]
+  },
+  {
+    "code": "lab_oam",
+    "canonical_name": "Общий анализ мочи (ОАМ)",
+    "category": "lab",
+    "synonyms": [
+      "ОАМ",
+      "Общий анализ мочи",
+      "Моча. Общий анализ (ОАМ)",
+      "Анализ мочи общий"
+    ]
+  },
+  {
+    "code": "lab_urine_nechiporenko",
+    "canonical_name": "Анализ мочи по Нечипоренко",
+    "category": "lab",
+    "synonyms": [
+      "Нечипоренко",
+      "Моча. Анализ по Нечипоренко"
+    ]
+  },
+  {
+    "code": "lab_urine_zimnitsky",
+    "canonical_name": "Анализ мочи по Зимницкому",
+    "category": "lab",
+    "synonyms": [
+      "Зимницкий",
+      "Моча. Анализ по Зимницкому"
+    ]
+  },
+  {
+    "code": "lab_urine_microalbumin",
+    "canonical_name": "Микроальбумин в моче",
+    "category": "lab",
+    "synonyms": [
+      "Моча. Микроальбумин в суточной моче",
+      "Микроальбуминурия"
+    ]
+  },
+  {
+    "code": "lab_coprogram",
+    "canonical_name": "Копрограмма (общий анализ кала)",
+    "category": "lab",
+    "synonyms": [
+      "Копрограмма",
+      "Кал. Копрограмма",
+      "Кал. Копрограмма (развернутый анализ)",
+      "Общий анализ кала"
+    ]
+  },
+  {
+    "code": "lab_fecal_occult_blood",
+    "canonical_name": "Анализ кала на скрытую кровь",
+    "category": "lab",
+    "synonyms": [
+      "Кал на скрытую кровь",
+      "Кал на скрытую кровь (iFOB-test)",
+      "FOB тест"
+    ]
+  },
+  {
+    "code": "lab_glucose",
+    "canonical_name": "Глюкоза крови",
+    "category": "lab",
+    "synonyms": [
+      "Глюкоза",
+      "Сахар крови",
+      "Глюкоза (сахар крови)",
+      "Глюкоза (сахар крови) (динамика)",
+      "Глюкоза в сыворотке"
+    ]
+  },
+  {
+    "code": "lab_gtt",
+    "canonical_name": "Глюкозотолерантный тест (ГТТ)",
+    "category": "lab",
+    "synonyms": [
+      "ГТТ",
+      "Глюкозотолерантный тест",
+      "Глюкозотолерантный тест. Стандартный",
+      "Глюкозотолерантный тест для беременных"
+    ]
+  },
+  {
+    "code": "lab_hba1c",
+    "canonical_name": "Гликированный гемоглобин (HbA1c)",
+    "category": "lab",
+    "synonyms": [
+      "HbA1c",
+      "Гликированный гемоглобин"
+    ]
+  },
+  {
+    "code": "lab_insulin",
+    "canonical_name": "Инсулин крови",
+    "category": "lab",
+    "synonyms": [
+      "Инсулин"
+    ]
+  },
+  {
+    "code": "lab_homa_ir",
+    "canonical_name": "Индекс инсулинорезистентности (HOMA-IR)",
+    "category": "lab",
+    "synonyms": [
+      "HOMA-IR",
+      "Индекс HOMA-IR (Инсулин + Глюкоза)",
+      "Оценка инсулинорезистентности"
+    ]
+  },
+  {
+    "code": "lab_alt",
+    "canonical_name": "Аланинаминотрансфераза (АЛТ)",
+    "category": "lab",
+    "synonyms": [
+      "АЛТ",
+      "ALT",
+      "Аланинаминотрансфераза"
+    ]
+  },
+  {
+    "code": "lab_ast",
+    "canonical_name": "Аспартатаминотрансфераза (АСТ)",
+    "category": "lab",
+    "synonyms": [
+      "АСТ",
+      "AST",
+      "Аспартатаминотрансфераза"
+    ]
+  },
+  {
+    "code": "lab_bilirubin_total",
+    "canonical_name": "Билирубин общий",
+    "category": "lab",
+    "synonyms": [
+      "Билирубин общий (динамика)",
+      "Общий билирубин",
+      "Определение общего билирубина в капиллярной крови"
+    ]
+  },
+  {
+    "code": "lab_bilirubin_direct",
+    "canonical_name": "Билирубин прямой",
+    "category": "lab",
+    "synonyms": [
+      "Билирубин прямой (динамика)",
+      "Прямой билирубин",
+      "Определение прямого билирубина в капиллярной крови"
+    ]
+  },
+  {
+    "code": "lab_total_protein",
+    "canonical_name": "Общий белок крови",
+    "category": "lab",
+    "synonyms": [
+      "Общий белок",
+      "Белок общий в сыворотке"
+    ]
+  },
+  {
+    "code": "lab_creatinine",
+    "canonical_name": "Креатинин крови",
+    "category": "lab",
+    "synonyms": [
+      "Креатинин",
+      "Креатинин в сыворотке (с расчетом СКФ)",
+      "Креатинин с расчетом скорости клубочковой фильтрации (СКФ)"
+    ]
+  },
+  {
+    "code": "lab_urea",
+    "canonical_name": "Мочевина крови",
+    "category": "lab",
+    "synonyms": [
+      "Мочевина",
+      "Мочевина (динамика)",
+      "Мочевина в сыворотке"
+    ]
+  },
+  {
+    "code": "lab_uric_acid",
+    "canonical_name": "Мочевая кислота",
+    "category": "lab",
+    "synonyms": [
+      "Мочевая кислота (динамика)",
+      "Мочевая кислота в сыворотке"
+    ]
+  },
+  {
+    "code": "lab_amylase",
+    "canonical_name": "Амилаза общая (Альфа-амилаза)",
+    "category": "lab",
+    "synonyms": [
+      "Альфа-амилаза",
+      "Амилаза общая в сыворотке",
+      "Амилаза крови"
+    ]
+  },
+  {
+    "code": "lab_amylase_pancreatic",
+    "canonical_name": "Амилаза панкреатическая",
+    "category": "lab",
+    "synonyms": [
+      "Альфа-амилаза панкреатическая"
+    ]
+  },
+  {
+    "code": "lab_iron",
+    "canonical_name": "Железо сывороточное (Fe)",
+    "category": "lab",
+    "synonyms": [
+      "Железо",
+      "Железо (Fe)",
+      "Железо (Fe) в сыворотке"
+    ]
+  },
+  {
+    "code": "lab_ferritin",
+    "canonical_name": "Ферритин",
+    "category": "lab",
+    "synonyms": [
+      "Ферритин в сыворотке",
+      "Ferritin"
+    ]
+  },
+  {
+    "code": "lab_vitamin_d",
+    "canonical_name": "Витамин D (25-OH)",
+    "category": "lab",
+    "synonyms": [
+      "Витамин D",
+      "Витамин Д",
+      "25-OH витамин D",
+      "25-OH витамин D (динамика)",
+      "Витамин Д (25-гидроксивитамин D)"
+    ]
+  },
+  {
+    "code": "lab_vitamin_b12",
+    "canonical_name": "Витамин B12 (цианокобаламин)",
+    "category": "lab",
+    "synonyms": [
+      "Витамин B12",
+      "Витамин В12",
+      "Витамин В12 (цианокобаламин)",
+      "Цианокобаламин"
+    ]
+  },
+  {
+    "code": "lab_vitamin_b9",
+    "canonical_name": "Фолиевая кислота (Витамин B9)",
+    "category": "lab",
+    "synonyms": [
+      "Фолиевая кислота",
+      "Витамин B9",
+      "Витамин B9 (фолиевая кислота)",
+      "Витамин В9"
+    ]
+  },
+  {
+    "code": "lab_calcium",
+    "canonical_name": "Кальций общий (Ca)",
+    "category": "lab",
+    "synonyms": [
+      "Кальций",
+      "Кальций общий (Са) в сыворотке",
+      "Кальций общий"
+    ]
+  },
+  {
+    "code": "lab_magnesium",
+    "canonical_name": "Магний (Mg)",
+    "category": "lab",
+    "synonyms": [
+      "Магний",
+      "Магний (Мg)",
+      "Магний (Mg) в сыворотке"
+    ]
+  },
+  {
+    "code": "lab_potassium",
+    "canonical_name": "Калий (K+)",
+    "category": "lab",
+    "synonyms": [
+      "Калий",
+      "Калий (К+) в сыворотке"
+    ]
+  },
+  {
+    "code": "lab_phosphorus",
+    "canonical_name": "Фосфор (P)",
+    "category": "lab",
+    "synonyms": [
+      "Фосфор",
+      "Фосфор (Р) в сыворотке"
+    ]
+  },
+  {
+    "code": "lab_tsh",
+    "canonical_name": "ТТГ (тиреотропный гормон)",
+    "category": "lab",
+    "synonyms": [
+      "ТТГ",
+      "TSH",
+      "Тиреотропный гормон"
+    ]
+  },
+  {
+    "code": "lab_hdl",
+    "canonical_name": "Липопротеины высокой плотности (ЛПВП)",
+    "category": "lab",
+    "synonyms": [
+      "ЛПВП",
+      "HDL",
+      "Холестерин ЛПВП"
+    ]
+  },
+  {
+    "code": "lab_ldl",
+    "canonical_name": "Липопротеины низкой плотности (ЛПНП)",
+    "category": "lab",
+    "synonyms": [
+      "ЛПНП",
+      "LDL",
+      "Холестерин ЛПНП"
+    ]
+  },
+  {
+    "code": "lab_d_dimer",
+    "canonical_name": "Д-димер",
+    "category": "lab",
+    "synonyms": [
+      "D-димер",
+      "D-dimer"
+    ]
+  },
+  {
+    "code": "lab_aptt",
+    "canonical_name": "АЧТВ / АПТВ (коагулограмма)",
+    "category": "lab",
+    "synonyms": [
+      "АЧТВ",
+      "АПТВ",
+      "АПТВ (активированное парциальное тромбопластинновое время)"
+    ]
+  },
+  {
+    "code": "lab_blood_group",
+    "canonical_name": "Группа крови и резус-фактор (ABO + Rh)",
+    "category": "lab",
+    "synonyms": [
+      "Группа крови",
+      "Кровь. Определение группы крови АВО + Резус фактора"
+    ]
+  },
+  {
+    "code": "lab_profile_anemia",
+    "canonical_name": "Профиль «Диагностика анемии»",
+    "category": "lab",
+    "synonyms": [
+      "Диагностика анемии",
+      "Профиль \"Диагностика анемии\"",
+      "Диагностика анемии. Стандарт",
+      "Диагностика анемии. Расширенный"
+    ]
+  },
+  {
+    "code": "lab_profile_liver",
+    "canonical_name": "Профиль «Обследование печени» (печёночные пробы)",
+    "category": "lab",
+    "synonyms": [
+      "Печеночные пробы",
+      "Профиль \"Обследование печени\"",
+      "Печёночные пробы (АЛТ, АСТ, билирубин общий, билирубин прямой)",
+      "Печеночные пробы. Расширенное исследование",
+      "Здоровая печень.Базовый",
+      "Здоровая печень. Профилактика"
+    ]
+  },
+  {
+    "code": "lab_profile_thyroid",
+    "canonical_name": "Профиль «Обследование щитовидной железы»",
+    "category": "lab",
+    "synonyms": [
+      "Профиль \"Обследование щитовидной железы\" стандартный",
+      "Профиль \"Обследование щитовидной железы\" полный",
+      "Профиль Обследование щитовидной железы расширенный (гормоны и микроэлементы)"
+    ]
+  },
+  {
+    "code": "lab_profile_cardio",
+    "canonical_name": "Профиль «Кардиориск»",
+    "category": "lab",
+    "synonyms": [
+      "Кардиориск",
+      "Профиль \"Кардиориск\" стандартный",
+      "Кардиориск. Расширенное обследование"
+    ]
+  },
+  {
+    "code": "doc_terapevt",
+    "canonical_name": "Приём терапевта",
+    "category": "doctor",
+    "synonyms": [
+      "Терапевт",
+      "Консультация терапевта",
+      "Прием терапевта первичный"
+    ]
+  },
+  {
+    "code": "doc_kardiolog",
+    "canonical_name": "Приём кардиолога",
+    "category": "doctor",
+    "synonyms": [
+      "Кардиолог",
+      "Консультация кардиолога",
+      "Аритмолог"
+    ]
+  },
+  {
+    "code": "doc_pediatr",
+    "canonical_name": "Приём педиатра",
+    "category": "doctor",
+    "synonyms": [
+      "Педиатр",
+      "Консультация педиатра",
+      "Педиатр-неонатолог"
+    ]
+  },
+  {
+    "code": "doc_gastroenterolog",
+    "canonical_name": "Приём гастроэнтеролога",
+    "category": "doctor",
+    "synonyms": [
+      "Гастроэнтеролог",
+      "Консультация гастроэнтеролога"
+    ]
+  },
+  {
+    "code": "doc_pulmonolog",
+    "canonical_name": "Приём пульмонолога",
+    "category": "doctor",
+    "synonyms": [
+      "Пульмонолог",
+      "Консультация пульмонолога"
+    ]
+  },
+  {
+    "code": "doc_ginekolog",
+    "canonical_name": "Приём гинеколога",
+    "category": "doctor",
+    "synonyms": [
+      "Гинеколог",
+      "Акушер-гинеколог",
+      "Гинеколог-эндокринолог",
+      "Консультация гинеколога"
+    ]
+  },
+  {
+    "code": "doc_endokrinolog",
+    "canonical_name": "Приём эндокринолога",
+    "category": "doctor",
+    "synonyms": [
+      "Эндокринолог",
+      "Консультация эндокринолога"
+    ]
+  },
+  {
+    "code": "doc_nevrolog",
+    "canonical_name": "Приём невролога (невропатолога)",
+    "category": "doctor",
+    "synonyms": [
+      "Невролог",
+      "Невропатолог",
+      "Невропатолог (Невролог)",
+      "Консультация невролога"
+    ]
+  },
+  {
+    "code": "doc_revmatolog",
+    "canonical_name": "Приём ревматолога",
+    "category": "doctor",
+    "synonyms": [
+      "Ревматолог",
+      "Кардиоревматолог"
+    ]
+  },
+  {
+    "code": "doc_infekcionist",
+    "canonical_name": "Приём инфекциониста",
+    "category": "doctor",
+    "synonyms": [
+      "Инфекционист",
+      "Паразитолог"
+    ]
+  },
+  {
+    "code": "doc_allergolog",
+    "canonical_name": "Приём аллерголога",
+    "category": "doctor",
+    "synonyms": [
+      "Аллерголог",
+      "Иммунолог"
+    ]
+  },
+  {
+    "code": "doc_dermatolog",
+    "canonical_name": "Приём дерматолога",
+    "category": "doctor",
+    "synonyms": [
+      "Дерматолог",
+      "Дерматовенеролог"
+    ]
+  },
+  {
+    "code": "doc_gematolog",
+    "canonical_name": "Приём гематолога",
+    "category": "doctor",
+    "synonyms": [
+      "Гематолог"
+    ]
+  },
+  {
+    "code": "doc_gepatolog",
+    "canonical_name": "Приём гепатолога",
+    "category": "doctor",
+    "synonyms": [
+      "Гепатолог"
+    ]
+  },
+  {
+    "code": "doc_mammolog",
+    "canonical_name": "Приём маммолога",
+    "category": "doctor",
+    "synonyms": [
+      "Маммолог"
+    ]
+  },
+  {
+    "code": "doc_ortoped",
+    "canonical_name": "Приём ортопеда",
+    "category": "doctor",
+    "synonyms": [
+      "Ортопед",
+      "Травматолог-ортопед"
+    ]
+  },
+  {
+    "code": "doc_pediatric_kardiolog",
+    "canonical_name": "Приём детского кардиолога",
+    "category": "doctor",
+    "synonyms": [
+      "Детский кардиолог",
+      "Детский аритмолог"
+    ]
+  },
+  {
+    "code": "doc_pediatric_gastro",
+    "canonical_name": "Приём детского гастроэнтеролога",
+    "category": "doctor",
+    "synonyms": [
+      "Детский гастроэнтеролог"
+    ]
+  },
+  {
+    "code": "doc_pediatric_pulmonolog",
+    "canonical_name": "Приём детского пульмонолога",
+    "category": "doctor",
+    "synonyms": [
+      "Детский пульмонолог"
+    ]
+  },
+  {
+    "code": "doc_pediatric_nevrolog",
+    "canonical_name": "Приём детского невролога",
+    "category": "doctor",
+    "synonyms": [
+      "Детский невролог",
+      "Детский невропатолог (Невролог)"
+    ]
+  },
+  {
+    "code": "diag_ecg",
+    "canonical_name": "ЭКГ (электрокардиограмма)",
+    "category": "diagnostics",
+    "synonyms": [
+      "ЭКГ",
+      "Электрокардиограмма",
+      "ЭКГ с расшифровкой",
+      "ЭКГ (электрокардиограмма) детям"
+    ]
+  },
+  {
+    "code": "diag_echo_cg",
+    "canonical_name": "УЗИ сердца (ЭхоКГ)",
+    "category": "diagnostics",
+    "synonyms": [
+      "ЭхоКГ",
+      "УЗИ сердца",
+      "УЗИ сердца (эхокардиография)",
+      "УЗИ сердца (эхокардиография) детям"
+    ]
+  },
+  {
+    "code": "diag_holter",
+    "canonical_name": "Суточное мониторирование ЭКГ (Холтер)",
+    "category": "diagnostics",
+    "synonyms": [
+      "Холтер",
+      "Холтер ЭКГ",
+      "Суточное мониторирование ЭКГ (по Холтеру)",
+      "Суточное мониторирование ЭКГ (по Холтеру) детям"
+    ]
+  },
+  {
+    "code": "diag_smad",
+    "canonical_name": "Суточное мониторирование давления (СМАД)",
+    "category": "diagnostics",
+    "synonyms": [
+      "СМАД",
+      "Суточное мониторирование артериального давления (СМАД)",
+      "Суточное мониторирование артериального давления (СМАД) детям"
+    ]
+  },
+  {
+    "code": "diag_uzi_obp",
+    "canonical_name": "УЗИ органов брюшной полости (ОБП)",
+    "category": "diagnostics",
+    "synonyms": [
+      "УЗИ ОБП",
+      "УЗИ брюшной полости",
+      "УЗИ органов брюшной полости"
+    ]
+  },
+  {
+    "code": "diag_uzi_thyroid",
+    "canonical_name": "УЗИ щитовидной железы",
+    "category": "diagnostics",
+    "synonyms": [
+      "УЗИ щитовидки",
+      "УЗИ щитовидной железы детям"
+    ]
+  },
+  {
+    "code": "diag_uzi_kidneys",
+    "canonical_name": "УЗИ почек",
+    "category": "diagnostics",
+    "synonyms": [
+      "УЗИ почек и надпочечников"
+    ]
+  },
+  {
+    "code": "diag_uzi_pelvis",
+    "canonical_name": "УЗИ органов малого таза",
+    "category": "diagnostics",
+    "synonyms": [
+      "УЗИ малого таза",
+      "УЗИ ОМТ"
+    ]
+  },
+  {
+    "code": "diag_uzi_breast",
+    "canonical_name": "УЗИ молочных желез",
+    "category": "diagnostics",
+    "synonyms": [
+      "УЗИ груди"
+    ]
+  },
+  {
+    "code": "diag_uzi_bladder",
+    "canonical_name": "УЗИ мочевого пузыря",
+    "category": "diagnostics",
+    "synonyms": [
+      "УЗИ мочевого пузыря с определением остаточной мочи"
+    ]
+  },
+  {
+    "code": "diag_uzi_soft_tissues",
+    "canonical_name": "УЗИ мягких тканей",
+    "category": "diagnostics",
+    "synonyms": [
+      "УЗИ мягких тканей детям"
+    ]
+  },
+  {
+    "code": "diag_uzi_lymph",
+    "canonical_name": "УЗИ лимфатических узлов",
+    "category": "diagnostics",
+    "synonyms": [
+      "УЗИ лимфоузлов"
+    ]
+  },
+  {
+    "code": "diag_uzi_pregnancy",
+    "canonical_name": "УЗИ плода (при беременности)",
+    "category": "diagnostics",
+    "synonyms": [
+      "УЗИ плода (для беременных)",
+      "УЗИ при беременности"
+    ]
+  },
+  {
+    "code": "diag_uzi_doppler",
+    "canonical_name": "Доплер УЗИ плода (доплерография)",
+    "category": "diagnostics",
+    "synonyms": [
+      "Доплер УЗИ",
+      "Доплерография плода"
+    ]
+  },
+  {
+    "code": "diag_uzi_prostate",
+    "canonical_name": "УЗИ предстательной железы (ТРУЗИ)",
+    "category": "diagnostics",
+    "synonyms": [
+      "ТРУЗИ",
+      "УЗИ предстательной железы (простаты)",
+      "УЗИ простаты"
+    ]
+  },
+  {
+    "code": "diag_eeg",
+    "canonical_name": "ЭЭГ (электроэнцефалография)",
+    "category": "diagnostics",
+    "synonyms": [
+      "ЭЭГ",
+      "Рутинная ЭЭГ (электроэнцефалография)",
+      "Рутинная ЭЭГ (электроэнцефалография) детям",
+      "ЭЭГ (электроэнцефалография) детям"
+    ]
+  },
+  {
+    "code": "diag_spirography",
+    "canonical_name": "Спирография",
+    "category": "diagnostics",
+    "synonyms": [
+      "ФВД",
+      "Функция внешнего дыхания"
+    ]
+  },
+  {
+    "code": "diag_colposcopy",
+    "canonical_name": "Кольпоскопия",
+    "category": "diagnostics",
+    "synonyms": [
+      "Видеокольпоскопия"
+    ]
+  },
+  {
+    "code": "proc_spravka_075",
+    "canonical_name": "Медицинская справка 075/у (ранее 086/у)",
+    "category": "procedure",
+    "synonyms": [
+      "Справка 075/у",
+      "Справка 086/у",
+      "Справка 075/у (ранее 086/у) детям"
+    ]
+  },
+  {
+    "code": "proc_spravka_073",
+    "canonical_name": "Медицинская справка 073/у (ГАИ / водительская)",
+    "category": "procedure",
+    "synonyms": [
+      "Справка 073/у",
+      "Справка 073 (ГАИ)",
+      "Справка 073/у (ранее 083/у)"
+    ]
+  },
+  {
+    "code": "proc_spravka_026",
+    "canonical_name": "Справка 026/у (паспорт здоровья ребёнка)",
+    "category": "procedure",
+    "synonyms": [
+      "Справка 026/у",
+      "Справка по форме 026/у (паспорт здоровья ребенка)"
+    ]
+  },
+  {
+    "code": "proc_spravka_pool",
+    "canonical_name": "Справка для бассейна",
+    "category": "procedure",
+    "synonyms": [
+      "Справка в бассейн"
+    ]
+  },
+  {
+    "code": "proc_vms_install",
+    "canonical_name": "Установка ВМС",
+    "category": "procedure",
+    "synonyms": [
+      "Введение ВМС"
+    ]
+  },
+  {
+    "code": "proc_vms_remove",
+    "canonical_name": "Удаление ВМС",
+    "category": "procedure",
+    "synonyms": [
+      "Извлечение ВМС"
+    ]
+  }
+]

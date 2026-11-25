@@ -92,14 +92,14 @@ Source plan: [tasks/plan.md](./plan.md) | Source spec: [SPEC-normalization.md](.
 **Description:** Проанализировать реальные названия услуг из `raw_service_records` (`kdlolymp`, `invivo`, `doq`) и составить версионируемый JSON-справочник `backend/app/normalization/data/catalog_seed.json` на 65–80 наиболее востребованных позиций по всем 4 категориям ТЗ (`lab`, `doctor`, `diagnostics`, `procedure`) с богатыми синонимами и аббревиатурами (включая `ОАК`/`CBC`, `ОАМ`, `ТТГ`, `СОЭ`, `Ферритин`, `Витамин D`, `Терапевт`, `Кардиолог`, `УЗИ ОБП`, `ЭКГ`, `МРТ` и др.).
 
 **Acceptance criteria:**
-- [ ] `catalog_seed.json` содержит ≥ 65 (строго ≥ 50 по ТЗ) уникальных позиций с валидными `code`, `canonical_name`, `category`, `synonyms`.
-- [ ] Представлены все 4 категории (`lab`, `doctor`, `diagnostics`, `procedure`), нет дубликатов `code`, `canonical_name` или пересекающихся точных синонимов между разными услугами.
-- [ ] Кейс ТЗ (`«ОАК»`, `«Общий анализ крови»`, `«CBC»`, `«Клинический анализ крови»`) присутствует в синонимах единой услуги `Общий анализ крови (ОАК)`.
+- [x] `catalog_seed.json` содержит ≥ 65 (строго ≥ 50 по ТЗ) уникальных позиций с валидными `code`, `canonical_name`, `category`, `synonyms`.
+- [x] Представлены все 4 категории (`lab`, `doctor`, `diagnostics`, `procedure`), нет дубликатов `code`, `canonical_name` или пересекающихся точных синонимов между разными услугами.
+- [x] Кейс ТЗ (`«ОАК»`, `«Общий анализ крови»`, `«CBC»`, `«Клинический анализ крови»`) присутствует в синонимах единой услуги `Общий анализ крови (ОАК)`.
 
 **Verification:**
-- [ ] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_catalog_seed.py"`
-- [ ] Build succeeds: `make lint && make typecheck`
-- [ ] Manual check: проверить распределение позиций по 4 категориям в выводе теста
+- [x] Tests pass: `make test-normalization PYTEST_ARGS="tests/normalization/test_catalog_seed.py"`
+- [x] Build succeeds: `make lint && make typecheck`
+- [x] Manual check: проверить распределение позиций по 4 категориям в выводе теста
 
 **Dependencies:** Task 2
 
